@@ -1,0 +1,124 @@
+server:
+  port: 8080
+
+spring:
+  profiles:
+    active: dev
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  application:
+    name: book-store
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/book_store-dev?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+    username: root
+    password: ${DB_PASSWORD:123}
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      pool-name: BookStoreHikariCP
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate.format_sql: true
+    show-sql: true
+  jpa.open-in-view: true
+
+logging:
+  level:
+    com.your.app: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: DEBUG
+    org.springframework: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+---
+spring:
+  config:
+    activate:
+      on-profile: qa
+  application:
+    name: book-store
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/book_store-qa?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+    username: root
+    password: ${DB_PASSWORD:123}
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.format_sql: true
+    show-sql: false
+    open-in-view: false
+
+logging:
+  level:
+    com.your.app: INFO
+    org.hibernate.SQL: INFO
+    org.springframework: WARN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  application:
+    name: book-store
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/book_store-prod?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+    username: root
+    password: ${DB_PASSWORD:123}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      pool-name: BookStoreHikariCP
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.format_sql: false
+    show-sql: false
+    open-in-view: false
+
+logging:
+  level:
+    com.your.app: WARN
+    org.hibernate.SQL: WARN
+    org.springframework: WARN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+      base-path: /internal
+  endpoint:
+    health:
+      show-details: never
