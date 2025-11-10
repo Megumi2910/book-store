@@ -11,11 +11,16 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "book_id"}))
+@Table(uniqueConstraints = @UniqueConstraint(name = "UK_USER_BOOK_REVIEW", columnNames = {"user_id", "book_id"}))
 public class Review {
 
     @Id
@@ -23,14 +28,19 @@ public class Review {
     private Long reviewId;
 
     @Column(nullable = false)
+    @Min(value = 1, message = "Rating must be at least 1")
+    @Max(value = 5, message = "Rating must be at most 5")
     private Integer rating;
 
+    @Column(columnDefinition = "TEXT")
     private String comment;
 
     @Column(nullable = false)
+    @NotNull
     private LocalDateTime createdAt;
 
     @Column(nullable = false)
+    @NotNull
     private LocalDateTime updatedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -39,6 +49,7 @@ public class Review {
         nullable = false,
         foreignKey = @ForeignKey(name = "FK1_REVIEW")
     )
+    @NotNull
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -47,6 +58,7 @@ public class Review {
         nullable = false,
         foreignKey = @ForeignKey(name = "FK2_REVIEW")
     )
+    @NotNull
     private Book book;
     
     public Review(){}
@@ -60,6 +72,18 @@ public class Review {
         this.updatedAt = updatedAt;
         this.user = user;
         this.book = book;
+    }
+
+    // Audit annotations
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 
     public Long getReviewId() {
