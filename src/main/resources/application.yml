@@ -4,6 +4,17 @@ server:
 spring:
   profiles:
     active: dev
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: quangminhh29190@gmail.com
+    password: gkwz zvqt eevt sypr
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true   
 
 ---
 spring:

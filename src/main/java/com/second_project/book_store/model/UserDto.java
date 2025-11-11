@@ -14,9 +14,13 @@ import jakarta.validation.constraints.Size;
 @PasswordMatches // Applied at class level to compare password fields
 public class UserDto {
 
-    @NotBlank(message = "Full name is required")
-    @Size(min = 2, max = 100, message = "Full name must be between 2 and 100 characters")
-    private String fullName;
+    @NotBlank(message = "First name is required")
+    @Size(min = 1, max = 50, message = "First name must be between 1 and 50 characters")
+    private String firstName;
+
+    @NotBlank(message = "Last name is required")
+    @Size(min = 1, max = 50, message = "Last name must be between 1 and 50 characters")
+    private String lastName;
 
     @NotBlank(message = "Email is required")
     @ValidEmail // Custom validation for email format
@@ -54,9 +58,10 @@ public class UserDto {
     public UserDto() {
     }
 
-    public UserDto(String fullName, String email, String phoneNumber, String address, 
+    public UserDto(String firstName, String lastName, String email, String phoneNumber, String address, 
                    String password, String matchingPassword) {
-        this.fullName = fullName;
+        this.firstName = firstName;
+        this.lastName = lastName;
         this.email = email;
         this.phoneNumber = phoneNumber;
         this.address = address;
@@ -65,12 +70,20 @@ public class UserDto {
     }
 
     // Getters and Setters
-    public String getFullName() {
-        return fullName;
+    public String getFirstName() {
+        return firstName;
     }
 
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
 
     public String getEmail() {
@@ -115,7 +128,7 @@ public class UserDto {
 
     @Override
     public String toString() {
-        return "UserDto [fullName=" + fullName + ", email=" + email + ", phoneNumber=" + phoneNumber 
+        return "UserDto [firstName=" + firstName + ", lastName=" + lastName + ", email=" + email + ", phoneNumber=" + phoneNumber 
                 + ", address=" + address + "]";
     }
 }

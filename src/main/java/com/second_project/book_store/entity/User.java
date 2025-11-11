@@ -31,7 +31,10 @@ public class User {
     private Long userId;
 
     @Column(nullable = false)
-    private String fullName;
+    private String firstName;
+
+    @Column(nullable = false)
+    private String lastName;
     
     @Column(nullable = false, unique = true)
     private String email;
@@ -49,14 +52,14 @@ public class User {
     
     @Column(nullable = false)
     @NotNull
-    private boolean isEnabled;
+    private boolean isEnabled = false;
     
     @Column(nullable = false)
-    @NotNull
+    // @NotNull -> This may check too early (before @PrePersist or @PreUpdate executes) so it's better not to pair this with those annotations. 
     private LocalDateTime createdAt;
     
     @Column(nullable = false)
-    @NotNull
+    // @NotNull -> This may check too early (before @PrePersist or @PreUpdate executes) so it's better not to pair this with those annotations.
     private LocalDateTime updatedAt;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -68,12 +71,16 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviews = new ArrayList<>();
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private VerificationToken verificationToken;
+
     public User(){}
 
-    public User(Long userId, String fullName, String email, String phoneNumber, String address, String password,
+    public User(Long userId, String firstName, String lastName, String email, String phoneNumber, String address, String password,
             UserRole role, boolean isEnabled, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.userId = userId;
-        this.fullName = fullName;
+        this.firstName = firstName;
+        this.lastName = lastName;
         this.email = email;
         this.phoneNumber = phoneNumber;
         this.address = address;
@@ -124,6 +131,17 @@ public class User {
         review.setUser(null);
     }
 
+    public void setVerificationToken(VerificationToken verificationToken) {
+        this.verificationToken = verificationToken;
+        if (verificationToken != null) {
+            verificationToken.setUser(this);
+        }
+    }
+
+    public VerificationToken getVerificationToken() {
+        return verificationToken;
+    }
+
     public Long getUserId() {
         return userId;
     }
@@ -132,12 +150,20 @@ public class User {
         this.userId = userId;
     }
 
-    public String getFullName() {
-        return fullName;
+    public String getFirstName() {
+        return firstName;
     }
 
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
 
     public String getEmail() {
@@ -226,7 +252,7 @@ public class User {
 
     @Override
     public String toString() {
-        return "User [userId=" + userId + ", fullName=" + fullName + ", email=" + email + ", phoneNumber=" + phoneNumber
+        return "User [userId=" + userId + ", firstName=" + firstName + ", lastName=" + lastName + ", email=" + email + ", phoneNumber=" + phoneNumber
                 + ", address=" + address + ", role=" + role + ", isEnabled=" + isEnabled
                 + ", createdAt=" + createdAt + ", updatedAt=" + updatedAt + "]";
     }
