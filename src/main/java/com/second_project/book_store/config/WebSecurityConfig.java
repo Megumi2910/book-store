@@ -33,7 +33,8 @@ public class WebSecurityConfig {
         "/css/**",
         "/js/**",
         "/images/**",
-        "/webjars/**"
+        "/webjars/**",
+        "/api/v1/users/**"
     };
 
     private static final String[] CSRF_IGNORED_ENDPOINTS = {

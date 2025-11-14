@@ -12,7 +12,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Index;
 
@@ -51,17 +50,8 @@ public class VerificationToken {
     public VerificationToken(User user) {
         this.user = user;
         this.token = UUID.randomUUID().toString();
+        this.expiredAt = LocalDateTime.now().plusMinutes(TOKEN_DURATION);
         this.isValid = true;
-    }
-
-    @PrePersist
-    protected void onCreate() {
-        if (token == null) {
-            token = UUID.randomUUID().toString();
-        }
-        if (expiredAt == null) {
-            expiredAt = LocalDateTime.now().plusMinutes(TOKEN_DURATION);
-        }
     }
 
     public boolean isExpired() {

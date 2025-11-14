@@ -25,7 +25,7 @@ spring:
     name: book-store
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/book_store-dev?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+    url: jdbc:mysql://localhost:3306/book_store-dev?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=GMT%2B7&characterEncoding=UTF-8
     username: root
     password: ${DB_PASSWORD:123}
     hikari:
@@ -38,8 +38,11 @@ spring:
       ddl-auto: update
     properties:
       hibernate.format_sql: true
+      hibernate.jdbc.time_zone: GMT+7
     show-sql: true
   jpa.open-in-view: true
+  jackson:
+    time-zone: GMT+7
 
 logging:
   level:
@@ -66,7 +69,7 @@ spring:
     name: book-store
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/book_store-qa?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+    url: jdbc:mysql://localhost:3306/book_store-qa?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=GMT%2B7&characterEncoding=UTF-8
     username: root
     password: ${DB_PASSWORD:123}
   jpa:
@@ -75,8 +78,11 @@ spring:
       ddl-auto: validate
     properties:
       hibernate.format_sql: true
+      hibernate.jdbc.time_zone: GMT+7
     show-sql: false
     open-in-view: false
+  jackson:
+    time-zone: GMT+7
 
 logging:
   level:
@@ -102,7 +108,7 @@ spring:
     name: book-store
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/book_store-prod?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+    url: jdbc:mysql://localhost:3306/book_store-prod?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=GMT%2B7&characterEncoding=UTF-8
     username: root
     password: ${DB_PASSWORD:123}
     hikari:
@@ -115,8 +121,11 @@ spring:
       ddl-auto: validate
     properties:
       hibernate.format_sql: false
+      hibernate.jdbc.time_zone: GMT+7
     show-sql: false
     open-in-view: false
+  jackson:
+    time-zone: GMT+7
 
 logging:
   level:

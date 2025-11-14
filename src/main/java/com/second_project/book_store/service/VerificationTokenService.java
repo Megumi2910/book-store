@@ -16,5 +16,6 @@ public interface VerificationTokenService {
     void deleteToken(VerificationToken token);
 
     void deleteExpiredTokens();
+
 }
 

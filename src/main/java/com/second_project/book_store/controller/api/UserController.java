@@ -8,12 +8,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.second_project.book_store.model.UserDto;
 import com.second_project.book_store.service.UserService;
 import com.second_project.book_store.service.VerificationTokenService;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 
@@ -29,14 +29,24 @@ public class UserController {
         this.verificationTokenService = verificationTokenService;
     }
 
+    /**
+     * Extracts the base application URL from the current request.
+     * Uses Spring's ServletUriComponentsBuilder for reliable URL construction.
+     * Handles context path, port, and scheme automatically.
+     * Works correctly behind proxies and load balancers.
+     * 
+     * @return The base application URL (e.g., "http://localhost:8080" or "https://example.com/myapp")
+     */
+    private String getApplicationUrl() {
+        return ServletUriComponentsBuilder.fromCurrentContextPath()
+                .build()
+                .toUriString();
+    }
 
     @PostMapping("/register")
-    public String registerUser(@Valid @RequestBody UserDto userDto, HttpServletRequest request) {
-        // Get the application URL from the request
-        String applicationUrl = request.getScheme() + "://" + 
-                               request.getServerName() + ":" + 
-                               request.getServerPort() + 
-                               request.getContextPath();
+    public String registerUser(@Valid @RequestBody UserDto userDto) {
+        // Get the application URL from the request using best practices
+        String applicationUrl = getApplicationUrl();
         
         // Register user - event will handle token creation and email
         userService.registerUser(userDto, applicationUrl);
@@ -49,10 +59,18 @@ public class UserController {
 
         verificationTokenService.verifyToken(token);
 
-        return ResponseEntity.ok(Map.of("message", "Registration successfully verified"));
-
+        return ResponseEntity.ok(Map.of("message", "Registration successfully verified!"));
         
     }
 
-    
+    @GetMapping("/resend-verify-token")
+    public ResponseEntity<Map<String, String>> resendVerificationToken(String email){
+        // Get the application URL from the request using best practices
+        String applicationUrl = getApplicationUrl();
+        
+        // Resend token - event will handle token creation and email
+        userService.resendVerificationToken(email, applicationUrl);
+
+        return ResponseEntity.ok(Map.of("message", "Verification token resent. Please check your email."));
+    }
 }

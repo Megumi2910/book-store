@@ -8,7 +8,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.second_project.book_store.exception.ExpiredTokenException;
-import com.second_project.book_store.exception.InvalidTokenException;
+import com.second_project.book_store.exception.UserAlreadyEnabledException;
+import com.second_project.book_store.exception.UserNotFoundException;
+import com.second_project.book_store.exception.VerificationTokenNotFoundException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -19,12 +21,26 @@ public class ApiExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("error", "expired", "message", exception.getMessage()));
     }
+    
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleUserNotFoundException (UserNotFoundException exception){
 
-    @ExceptionHandler(InvalidTokenException.class)
-    public ResponseEntity<Map<String, String>> handleInvalidTokenException (InvalidTokenException exception){
-
-        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                .body(Map.of("error", "invalid", "message", exception.getMessage()));
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", "not found", "message", exception.getMessage()));
     }
     
+    @ExceptionHandler(VerificationTokenNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleVerificationTokenNotFoundException (VerificationTokenNotFoundException exception){
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", "not found", "message", exception.getMessage()));
+    }
+
+    @ExceptionHandler(UserAlreadyEnabledException.class)
+    public ResponseEntity<Map<String, String>> handleUserAlreadyEnabledException (UserAlreadyEnabledException exception){
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", "already verified", "message", exception.getMessage()));
+    }
+
 }

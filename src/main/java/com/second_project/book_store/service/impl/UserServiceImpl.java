@@ -8,6 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.second_project.book_store.entity.User;
 import com.second_project.book_store.entity.User.UserRole;
 import com.second_project.book_store.event.RegistrationCompleteEvent;
+import com.second_project.book_store.exception.UserAlreadyEnabledException;
+import com.second_project.book_store.exception.UserNotFoundException;
 import com.second_project.book_store.model.UserDto;
 import com.second_project.book_store.repository.UserRepository;
 import com.second_project.book_store.service.UserService;
@@ -46,5 +48,20 @@ public class UserServiceImpl implements UserService{
         eventPublisher.publishEvent(new RegistrationCompleteEvent(user, applicationUrl));
 
         return user;
+    }
+
+    @Override
+    @Transactional
+    public void resendVerificationToken(String email, String applicationUrl) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
+        
+        // Check if user is already enabled/verified
+        if (user.isEnabled()) {
+            throw new UserAlreadyEnabledException("User is already verified. No need to resend verification token.");
+        }
+        
+        // Publish event - existing listener will handle token creation and email sending
+        eventPublisher.publishEvent(new RegistrationCompleteEvent(user, applicationUrl));
     }
 }
