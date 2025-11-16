@@ -14,7 +14,7 @@ import java.lang.reflect.Method;
  * This validator uses reflection to access password fields,
  * making it reusable across different DTO classes.
  */
-public class   PasswordMatchesValidator implements ConstraintValidator<PasswordMatches, Object> {
+public class PasswordMatchesValidator implements ConstraintValidator<PasswordMatches, Object> {
     
     @Override
     public void initialize(PasswordMatches constraintAnnotation) {
@@ -35,15 +35,31 @@ public class   PasswordMatchesValidator implements ConstraintValidator<PasswordM
             
             // If either password is null, consider invalid
             if (password == null || matchingPassword == null) {
+                // Disable default constraint violation and add custom message
+                context.disableDefaultConstraintViolation();
+                context.buildConstraintViolationWithTemplate("Password and confirmation password are required")
+                       .addConstraintViolation();
                 return false;
             }
             
             // Check if passwords match
-            return password.equals(matchingPassword);
+            if (!password.equals(matchingPassword)) {
+                // Disable default constraint violation and add custom message
+                context.disableDefaultConstraintViolation();
+                context.buildConstraintViolationWithTemplate("Passwords do not match. Please ensure both password fields are identical.")
+                       .addPropertyNode("matchingPassword") // Associate error with matchingPassword field
+                       .addConstraintViolation();
+                return false;
+            }
+            
+            return true;
             
         } catch (Exception e) {
             // If reflection fails, log and return false
             System.err.println("Error validating passwords: " + e.getMessage());
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate("Error validating password fields: " + e.getMessage())
+                   .addConstraintViolation();
             return false;
         }
     }

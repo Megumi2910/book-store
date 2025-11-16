@@ -17,7 +17,8 @@ import jakarta.validation.constraints.Size;
 @PasswordMatches
 public class ResetPasswordRequestDto {
 
-    @NotBlank(message = "Reset token is required")
+    // Token can be provided in query parameter, so it's optional in body
+    // Validation will be handled in controller if both are missing
     private String token;
 
     @NotBlank(message = "Password is required")

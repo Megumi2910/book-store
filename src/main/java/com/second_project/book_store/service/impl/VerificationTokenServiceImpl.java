@@ -1,23 +1,29 @@
 package com.second_project.book_store.service.impl;
 
-import java.util.Optional;
-
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.second_project.book_store.entity.User;
 import com.second_project.book_store.entity.VerificationToken;
 import com.second_project.book_store.exception.ExpiredTokenException;
+import com.second_project.book_store.exception.UserNotFoundException;
 import com.second_project.book_store.exception.VerificationTokenNotFoundException;
 import com.second_project.book_store.repository.UserRepository;
 import com.second_project.book_store.repository.VerificationTokenRepository;
 import com.second_project.book_store.service.VerificationTokenService;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 @Service
 public class VerificationTokenServiceImpl implements VerificationTokenService {
 
     private final VerificationTokenRepository verificationTokenRepository;
     private final UserRepository userRepository;
+    
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public VerificationTokenServiceImpl(VerificationTokenRepository verificationTokenRepository,
                                        UserRepository userRepository) {
@@ -28,12 +34,39 @@ public class VerificationTokenServiceImpl implements VerificationTokenService {
     @Override
     @Transactional
     public VerificationToken createVerificationToken(User user) {
-        // Delete existing token if any
-        Optional<VerificationToken> existingToken = verificationTokenRepository.findByUserUserId(user.getUserId());
-        existingToken.ifPresent(verificationTokenRepository::delete);
+        // (Step 1: Get the ID before we lose it)
+        // Reload User entity fresh from database to clear any stale references
+        // This prevents ObjectOptimisticLockingFailureException when token was deleted in separate transaction
+        Long userId = user.getUserId();
 
-        // Create new token
-        VerificationToken verificationToken = new VerificationToken(user);
+        // (Step 2: Fetch FRESH user from database
+        // This user has NO stale references - it's current!)
+        User freshUser = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found: " + userId));
+        // freshUser.verificationToken = null ✅ (token was deleted)
+
+        // (Step 3: Detach the OLD user
+        // Tell Hibernate: "Stop tracking this old user object"
+        // This prevents Hibernate from trying to sync stale references)
+        // Detach the old user entity to prevent stale reference issues
+        entityManager.detach(user);
+        // Now Hibernate ignores the old user completely
+        
+        // (Step 4: Delete any existing token (if any)
+        // This is safe because freshUser has no stale references)
+        // Delete existing token if any - use repository method for reliable deletion
+        // This ensures the unique constraint on user_id is satisfied
+        // The @Modifying query bypasses entity manager cache, so it's safe
+        verificationTokenRepository.deleteByUserId(userId);
+        verificationTokenRepository.flush(); // Force immediate deletion before creating new token
+
+        // (Step 5: Clear the relationship on fresh user)
+        // Clear bidirectional relationship reference on fresh User entity
+        freshUser.setVerificationToken(null);
+
+        // (Step 6: Create new token with FRESH user)
+        // Create new token with fresh User entity
+        VerificationToken verificationToken = new VerificationToken(freshUser);
         return verificationTokenRepository.save(verificationToken);
     }
 
@@ -57,10 +90,9 @@ public class VerificationTokenServiceImpl implements VerificationTokenService {
                 .orElseThrow(() -> new VerificationTokenNotFoundException("Verification token not found: " + token));
 
         if (!verificationToken.isValidToken()){
-            // Delete invalid/expired token before throwing exception
-            Long tokenId = verificationToken.getVerificationTokenId();
-            verificationTokenRepository.deleteById(tokenId);
-            verificationTokenRepository.flush(); // Force immediate deletion
+            // Delete invalid/expired token in a separate transaction that commits before throwing exception
+            // This ensures the token is deleted even if the main transaction rolls back
+            deleteExpiredTokenInSeparateTransaction(verificationToken.getVerificationTokenId());
             throw new ExpiredTokenException();
         }
 
@@ -87,6 +119,18 @@ public class VerificationTokenServiceImpl implements VerificationTokenService {
     @Transactional
     public void deleteExpiredTokens() {
         verificationTokenRepository.deleteExpiredTokens();
+    }
+
+    /**
+     * Deletes an expired token in a separate transaction that commits immediately.
+     * This ensures the token is deleted even if the calling transaction rolls back due to an exception.
+     * 
+     * Uses REQUIRES_NEW propagation to create a new transaction that commits independently.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    private void deleteExpiredTokenInSeparateTransaction(Long tokenId) {
+        verificationTokenRepository.deleteById(tokenId);
+        verificationTokenRepository.flush(); // Force immediate commit
     }
 
 }

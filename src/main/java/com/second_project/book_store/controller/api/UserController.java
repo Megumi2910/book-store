@@ -125,14 +125,43 @@ public class UserController {
 
     /**
      * Step 3: Reset Password - User submits new password
-     * User provides token and new password
      * 
-     * Flow: User fills form → POST /api/v1/users/reset-password → Password updated
+     * Improved UX: Token can be provided in query parameter OR request body
+     * This allows users to click email link and submit password without copying token
+     * 
+     * Flow Options:
+     * Option A (Better UX): 
+     *   - User clicks email link → GET /reset-password?token=xxx (validates)
+     *   - User submits form → POST /reset-password?token=xxx + password in body
+     * 
+     * Option B (Alternative):
+     *   - POST /reset-password with token + password in body
      */
     @PostMapping("/reset-password")
-    public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody ResetPasswordRequestDto request) {
+    public ResponseEntity<Map<String, String>> resetPassword(
+            @RequestParam(required = false) String token,
+            @Valid @RequestBody ResetPasswordRequestDto request) {
+        
+        // Use token from query parameter if provided, otherwise use token from request body
+        // This improves UX - users can click email link and submit without copying token
+        String resetToken = (token != null && !token.isBlank()) ? token : request.getToken();
+        
+        // Validate token is provided
+        if (resetToken == null || resetToken.isBlank()) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", "validation_failed", 
+                            "message", "Reset token is required. Provide it in query parameter (?token=xxx) or request body."));
+        }
+        
+        // Create a new DTO with the token (from query param or body)
+        ResetPasswordRequestDto resetRequest = new ResetPasswordRequestDto(
+            resetToken,
+            request.getPassword(),
+            request.getMatchingPassword()
+        );
+        
         // Reset password - service will verify token and update password
-        userService.resetPassword(request);
+        userService.resetPassword(resetRequest);
         
         return ResponseEntity.ok(Map.of(
             "message", 
