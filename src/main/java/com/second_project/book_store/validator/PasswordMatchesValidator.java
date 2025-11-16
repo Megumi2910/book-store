@@ -14,7 +14,7 @@ import java.lang.reflect.Method;
  * This validator uses reflection to access password fields,
  * making it reusable across different DTO classes.
  */
-public class PasswordMatchesValidator implements ConstraintValidator<PasswordMatches, Object> {
+public class   PasswordMatchesValidator implements ConstraintValidator<PasswordMatches, Object> {
     
     @Override
     public void initialize(PasswordMatches constraintAnnotation) {

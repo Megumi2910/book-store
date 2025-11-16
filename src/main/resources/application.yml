@@ -5,10 +5,10 @@ spring:
   profiles:
     active: dev
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: quangminhh29190@gmail.com
-    password: gkwz zvqt eevt sypr
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -44,6 +44,18 @@ spring:
   jackson:
     time-zone: GMT+7
 
+# Admin user configuration for data seeder (dev profile only)
+admin:
+  default-password: ${ADMIN_DEFAULT_PASSWORD}
+  first-name: ${ADMIN_FIRST_NAME:Admin}
+  last-name: ${ADMIN_LAST_NAME:User}
+  email: ${ADMIN_EMAIL}
+
+# CORS configuration - used by WebSecurityConfig
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8080}
+
 logging:
   level:
     com.your.app: DEBUG
@@ -70,8 +82,8 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/book_store-qa?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=GMT%2B7&characterEncoding=UTF-8
-    username: root
-    password: ${DB_PASSWORD:123}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD}
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
@@ -109,8 +121,8 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/book_store-prod?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=GMT%2B7&characterEncoding=UTF-8
-    username: root
-    password: ${DB_PASSWORD:123}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD}
     hikari:
       maximum-pool-size: 10
       minimum-idle: 5

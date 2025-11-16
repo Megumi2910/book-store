@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+# Exception: Allow launch.json.example to be committed (it's a template without real credentials)
+!.vscode/launch.json.example
+# Note: .vscode/launch.json contains sensitive environment variables and is ignored
+# Copy launch.json.example to launch.json and fill in your actual values

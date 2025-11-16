@@ -5,13 +5,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.second_project.book_store.entity.ResetPasswordToken;
 import com.second_project.book_store.entity.User;
 import com.second_project.book_store.entity.User.UserRole;
+import com.second_project.book_store.event.PasswordResetRequestEvent;
 import com.second_project.book_store.event.RegistrationCompleteEvent;
+import com.second_project.book_store.exception.ResetPasswordTokenNotFoundException;
 import com.second_project.book_store.exception.UserAlreadyEnabledException;
 import com.second_project.book_store.exception.UserNotFoundException;
+import com.second_project.book_store.model.ResetPasswordRequestDto;
 import com.second_project.book_store.model.UserDto;
+import com.second_project.book_store.repository.ResetPasswordTokenRepository;
 import com.second_project.book_store.repository.UserRepository;
+import com.second_project.book_store.service.ResetPasswordTokenService;
 import com.second_project.book_store.service.UserService;
 
 @Service
@@ -20,12 +26,18 @@ public class UserServiceImpl implements UserService{
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher eventPublisher;
+    private final ResetPasswordTokenService resetPasswordTokenService;
+    private final ResetPasswordTokenRepository resetPasswordTokenRepository;
 
     public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder,
-                          ApplicationEventPublisher eventPublisher){
+                          ApplicationEventPublisher eventPublisher,
+                          ResetPasswordTokenService resetPasswordTokenService,
+                          ResetPasswordTokenRepository resetPasswordTokenRepository){
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.eventPublisher = eventPublisher;
+        this.resetPasswordTokenService = resetPasswordTokenService;
+        this.resetPasswordTokenRepository = resetPasswordTokenRepository;
     }
 
     @Override
@@ -63,5 +75,41 @@ public class UserServiceImpl implements UserService{
         
         // Publish event - existing listener will handle token creation and email sending
         eventPublisher.publishEvent(new RegistrationCompleteEvent(user, applicationUrl));
+    }
+
+    @Override
+    @Transactional
+    public void requestPasswordReset(String email, String applicationUrl) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
+        
+        // Check if user is enabled (only enabled users can reset password)
+        if (!user.isEnabled()) {
+            throw new UserNotFoundException("User account is not verified. Please verify your account first.");
+        }
+        
+        // Publish event - listener will handle token creation and email sending
+        eventPublisher.publishEvent(new PasswordResetRequestEvent(user, applicationUrl));
+    }
+
+    @Override
+    @Transactional
+    public void resetPassword(ResetPasswordRequestDto resetPasswordRequestDto) {
+        // Verify token is valid
+        resetPasswordTokenService.verifyToken(resetPasswordRequestDto.getToken());
+        
+        // Find token and user
+        ResetPasswordToken resetPasswordToken = resetPasswordTokenRepository.findByToken(resetPasswordRequestDto.getToken())
+                .orElseThrow(() -> new ResetPasswordTokenNotFoundException("Reset password token not found"));
+        
+        User user = resetPasswordToken.getUser();
+        
+        // Update password
+        user.setPassword(passwordEncoder.encode(resetPasswordRequestDto.getPassword()));
+        userRepository.save(user);
+        
+        // Delete the used token
+        resetPasswordTokenRepository.deleteById(resetPasswordToken.getResetPasswordTokenId());
+        resetPasswordTokenRepository.flush(); // Force immediate deletion
     }
 }

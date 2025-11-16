@@ -3,7 +3,6 @@ package com.second_project.book_store.config;
 import java.util.Arrays;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -16,9 +15,20 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.second_project.book_store.config.properties.CorsProperties;
+
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig {
+
+    private final CorsProperties corsProperties;
+
+    /**
+     * Constructor injection for CORS properties.
+     */
+    public WebSecurityConfig(CorsProperties corsProperties) {
+        this.corsProperties = corsProperties;
+    }
 
     private static final String[] PUBLIC_ENDPOINTS = {
         "/",
@@ -53,10 +63,8 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    CorsConfigurationSource corsConfigurationSource(
-        @Value("${app.cors.allowed-origins:*}") String allowedOrigins
-    ) {
-        String[] originArray = Arrays.stream(allowedOrigins.split(","))
+    CorsConfigurationSource corsConfigurationSource() {
+        String[] originArray = Arrays.stream(corsProperties.getAllowedOrigins().split(","))
             .map(String::trim)
             .filter(origin -> !origin.isBlank())
             .toArray(String[]::new);

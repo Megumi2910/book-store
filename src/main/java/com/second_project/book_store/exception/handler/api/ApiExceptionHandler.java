@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.second_project.book_store.exception.ExpiredTokenException;
+import com.second_project.book_store.exception.ResetPasswordTokenNotFoundException;
 import com.second_project.book_store.exception.UserAlreadyEnabledException;
 import com.second_project.book_store.exception.UserNotFoundException;
 import com.second_project.book_store.exception.VerificationTokenNotFoundException;
@@ -41,6 +42,13 @@ public class ApiExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("error", "already verified", "message", exception.getMessage()));
+    }
+
+    @ExceptionHandler(ResetPasswordTokenNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleResetPasswordTokenNotFoundException (ResetPasswordTokenNotFoundException exception){
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", "not found", "message", exception.getMessage()));
     }
 
 }

@@ -11,4 +11,6 @@ import com.second_project.book_store.entity.User;
 public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByEmail(String email);
+
+    Optional<User> findByRole(User.UserRole role);
 }
