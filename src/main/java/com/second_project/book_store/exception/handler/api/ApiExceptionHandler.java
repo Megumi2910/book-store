@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.second_project.book_store.exception.ExpiredTokenException;
+import com.second_project.book_store.exception.InvalidPasswordException;
 import com.second_project.book_store.exception.ResetPasswordTokenNotFoundException;
 import com.second_project.book_store.exception.UserAlreadyEnabledException;
 import com.second_project.book_store.exception.UserNotFoundException;
@@ -53,6 +54,13 @@ public class ApiExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(Map.of("error", "not found", "message", exception.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidPasswordException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidPasswordException(InvalidPasswordException exception) {
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", "invalid_password", "message", exception.getMessage()));
     }
 
     /**

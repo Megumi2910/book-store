@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.second_project.book_store.model.ChangePasswordRequestDto;
 import com.second_project.book_store.model.ForgotPasswordRequestDto;
 import com.second_project.book_store.model.ResetPasswordRequestDto;
 import com.second_project.book_store.model.UserDto;
@@ -19,6 +20,10 @@ import com.second_project.book_store.service.UserService;
 import com.second_project.book_store.service.VerificationTokenService;
 
 import jakarta.validation.Valid;
+
+import org.springframework.security.core.Authentication;
+
+import com.second_project.book_store.security.CustomUserDetails;
 
 
 @RestController
@@ -49,6 +54,62 @@ public class UserController {
         return ServletUriComponentsBuilder.fromCurrentContextPath()
                 .build()
                 .toUriString();
+    }
+
+    /**
+     * Extracts userId from Spring Security Authentication object.
+     * 
+     * BEST PRACTICE: Store userId in Authentication principal to avoid database lookups.
+     * 
+     * How it works:
+     * 1. User logs in → CustomUserDetailsService.loadUserByUsername() is called
+     * 2. Returns CustomUserDetails containing only essential fields (userId, email, role, enabled)
+     * 3. Spring Security stores CustomUserDetails in Authentication.principal
+     * 4. We can access userId directly without database lookup!
+     * 
+     * Benefits:
+     * - No database lookup needed (better performance)
+     * - No risk of lazy loading exceptions (we don't store entire User entity)
+     * - Cleaner code
+     * 
+     * @param authentication Spring Security Authentication object (automatically injected)
+     * @return User ID of the authenticated user (never null)
+     * @throws IllegalStateException if authentication is null or principal is not CustomUserDetails
+     */
+    private Long getUserIdFromAuthentication(Authentication authentication) {
+        // Null safety check
+        if (authentication == null) {
+            throw new IllegalStateException("Authentication cannot be null. User must be authenticated.");
+        }
+        
+        // Get the principal (UserDetails) from Authentication
+        Object principal = authentication.getPrincipal();
+        
+        // Null safety check
+        if (principal == null) {
+            throw new IllegalStateException("Authentication principal cannot be null. " +
+                    "Make sure CustomUserDetailsService is configured correctly.");
+        }
+        
+        // Check if it's our CustomUserDetails
+        if (principal instanceof CustomUserDetails) {
+            CustomUserDetails userDetails = (CustomUserDetails) principal;
+            Long userId = userDetails.getUserId();
+            
+            // Additional null safety check (shouldn't happen, but defensive programming)
+            if (userId == null) {
+                throw new IllegalStateException("User ID cannot be null in CustomUserDetails. " +
+                        "This indicates a configuration error.");
+            }
+            
+            return userId; // ✅ Direct access - NO DATABASE LOOKUP!
+        }
+        
+        // Fallback: If principal is not CustomUserDetails (shouldn't happen, but safety check)
+        // This handles edge cases or if someone uses default Spring Security UserDetails
+        throw new IllegalStateException("Authentication principal is not CustomUserDetails. " +
+                "Expected: CustomUserDetails, but got: " + principal.getClass().getName() + ". " +
+                "Make sure CustomUserDetailsService is configured correctly.");
     }
 
     @PostMapping("/register")
@@ -166,6 +227,54 @@ public class UserController {
         return ResponseEntity.ok(Map.of(
             "message", 
             "Password has been reset successfully. You can now login with your new password."
+        ));
+    }
+
+    /**
+     * Change Password - For authenticated users who know their current password
+     * 
+     * Flow:
+     * 1. User is authenticated (logged in via HTTP Basic Auth or form login)
+     * 2. User provides current password + new password
+     * 3. System verifies current password matches
+     * 4. System verifies new password is different from current
+     * 5. System updates password
+     * 
+     * Security:
+     * - Requires authentication (user must be logged in)
+     * - Verifies current password before allowing change
+     * - Ensures new password is different from current password
+     * 
+     * Authentication:
+     * - HTTP Basic Auth: Send Authorization header with email:password
+     * - Form Login: User must be logged in via web form
+     * 
+     * Example HTTP Basic Auth (Postman/curl):
+     * Authorization: Basic base64(email:password)
+     */
+    @PostMapping("/change-password")
+    public ResponseEntity<Map<String, String>> changePassword(
+            Authentication authentication,
+            @Valid @RequestBody ChangePasswordRequestDto request) {
+        
+        // Null safety check for request
+        if (request == null) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", "validation_failed", 
+                            "message", "Request body cannot be null"));
+        }
+        
+        // Get userId directly from Authentication principal - NO DATABASE LOOKUP NEEDED! ✅
+        // This is the BEST PRACTICE approach!
+        // CustomUserDetails stores only essential fields, avoiding lazy loading issues
+        Long userId = getUserIdFromAuthentication(authentication);
+        
+        // Change password - service will verify current password and update
+        userService.changePassword(userId, request);
+        
+        return ResponseEntity.ok(Map.of(
+            "message", 
+            "Password has been changed successfully."
         ));
     }
 }

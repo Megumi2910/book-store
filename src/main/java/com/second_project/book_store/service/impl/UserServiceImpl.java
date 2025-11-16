@@ -10,9 +10,11 @@ import com.second_project.book_store.entity.User;
 import com.second_project.book_store.entity.User.UserRole;
 import com.second_project.book_store.event.PasswordResetRequestEvent;
 import com.second_project.book_store.event.RegistrationCompleteEvent;
+import com.second_project.book_store.exception.InvalidPasswordException;
 import com.second_project.book_store.exception.ResetPasswordTokenNotFoundException;
 import com.second_project.book_store.exception.UserAlreadyEnabledException;
 import com.second_project.book_store.exception.UserNotFoundException;
+import com.second_project.book_store.model.ChangePasswordRequestDto;
 import com.second_project.book_store.model.ResetPasswordRequestDto;
 import com.second_project.book_store.model.UserDto;
 import com.second_project.book_store.repository.ResetPasswordTokenRepository;
@@ -111,5 +113,33 @@ public class UserServiceImpl implements UserService{
         // Delete the used token
         resetPasswordTokenRepository.deleteById(resetPasswordToken.getResetPasswordTokenId());
         resetPasswordTokenRepository.flush(); // Force immediate deletion
+    }
+
+    @Override
+    @Transactional
+    public void changePassword(Long userId, ChangePasswordRequestDto changePasswordRequestDto) {
+        // Find user
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
+        
+        // Verify current password matches
+        if (!passwordEncoder.matches(changePasswordRequestDto.getCurrentPassword(), user.getPassword())) {
+            throw new InvalidPasswordException("Current password is incorrect");
+        }
+        
+        // Verify new password is different from current password
+        if (passwordEncoder.matches(changePasswordRequestDto.getPassword(), user.getPassword())) {
+            throw new InvalidPasswordException("New password must be different from current password");
+        }
+        
+        // Update password
+        user.setPassword(passwordEncoder.encode(changePasswordRequestDto.getPassword()));
+        userRepository.save(user);
+    }
+
+    @Override
+    public User findUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
     }
 }

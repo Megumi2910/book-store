@@ -62,3 +62,54 @@ Content-Type: application/json
     "password":"user1234",
     "matchingPassword":"different1234"
 }
+
+### Change Password - For authenticated users (REQUIRES AUTHENTICATION)
+### Option A: HTTP Basic Auth (RECOMMENDED for REST APIs)
+### Format: Authorization: Basic base64(email:password)
+### Example: If email is "user@example.com" and password is "password123"
+### Then base64("user@example.com:password123") = "dXNlckBleGFtcGxlLmNvbTpwYXNzd29yZDEyMw=="
+POST http://127.0.0.1:8080/api/v1/users/change-password HTTP/1.1
+Content-Type: application/json
+Authorization: Basic dXNlckBleGFtcGxlLmNvbTpwYXNzd29yZDEyMw==
+# Replace the Authorization header with your actual email:password base64 encoded
+# In Postman: Go to Authorization tab → Type: Basic Auth → Enter email and password
+
+{
+    "currentPassword":"oldPassword123",
+    "password":"newPassword123",
+    "matchingPassword":"newPassword123"
+}
+
+### Change Password - Option B: Form Login (for web browsers)
+### If you're using form login, you need to login via /login first
+### Then Spring Security will use the session cookie for authentication
+POST http://127.0.0.1:8080/api/v1/users/change-password HTTP/1.1
+Content-Type: application/json
+Cookie: JSESSIONID=your-session-id-here
+# Note: Replace JSESSIONID with your actual session cookie after logging in
+
+{
+    "currentPassword":"oldPassword123",
+    "password":"newPassword123",
+    "matchingPassword":"newPassword123"
+}
+
+### Test Change Password - Wrong current password
+POST http://127.0.0.1:8080/api/v1/users/change-password HTTP/1.1
+Content-Type: application/json
+
+{
+    "currentPassword":"wrongPassword",
+    "password":"newPassword123",
+    "matchingPassword":"newPassword123"
+}
+
+### Test Change Password - New password same as current
+POST http://127.0.0.1:8080/api/v1/users/change-password HTTP/1.1
+Content-Type: application/json
+
+{
+    "currentPassword":"oldPassword123",
+    "password":"oldPassword123",
+    "matchingPassword":"oldPassword123"
+}
