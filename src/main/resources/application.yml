@@ -55,6 +55,12 @@ admin:
 app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8080}
+  # Frontend URL configuration - used for password reset and email verification links
+  # For Thymeleaf: Frontend and backend are on the same server (port 8080)
+  # Use 127.0.0.1:8080 or localhost:8080 - both work, but use the one matching your server
+  # For separate frontend (React/Vue): Use http://localhost:3000
+  frontend:
+    base-url: ${FRONTEND_BASE_URL:http://127.0.0.1:8080}
 
 logging:
   level:

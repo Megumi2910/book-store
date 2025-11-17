@@ -54,7 +54,7 @@ public class WebSecurityConfig {
         "/verify-registration",
         "/register",
         "/resend-verify-token",
-        "/reset-password",
+        "/reset-password",  // ✅ Thymeleaf page - GET and POST (must be public!)
         "/save-password",
         "/forgot-password",
         "/login/**",
@@ -67,15 +67,15 @@ public class WebSecurityConfig {
         "/api/v1/users/verify-registration",
         "/api/v1/users/resend-verify-token",
         "/api/v1/users/forgot-password",
-        "/api/v1/users/reset-password"
+        "/api/v1/users/reset-password"  // API endpoint - POST only
     };
 
     private static final String[] CSRF_IGNORED_ENDPOINTS = {
-        "/api/**",
+        "/api/**",  // REST APIs don't need CSRF (stateless)
         "/register",
         "/verify-registration",
         "/resend-verify-token",
-        "/reset-password",
+        "/reset-password",  // ✅ Thymeleaf form - CSRF handled by Thymeleaf automatically
         "/save-password",
         "/forgot-password"
     };
@@ -192,13 +192,18 @@ public class WebSecurityConfig {
             // This allows clients (Postman, mobile apps, frontend) to authenticate easily
             .httpBasic(Customizer.withDefaults())
             
-            // Form login for web pages (optional - only if you have web forms)
+            // Form login for web pages (Thymeleaf)
             // Note: This works alongside HTTP Basic Auth
             // - REST clients use HTTP Basic Auth (Authorization header)
-            // - Web browsers can use form login
+            // - Web browsers use form login (Thymeleaf)
             .formLogin(form -> form
-                .loginPage("/login")
-                .permitAll()
+                .loginPage("/login")  // Custom login page
+                .loginProcessingUrl("/login")  // POST endpoint (Spring Security handles automatically)
+                .defaultSuccessUrl("/", true)  // Redirect to home after successful login
+                .failureUrl("/login?error=true")  // Redirect back to login on failure
+                .usernameParameter("username")  // Form field name (we use email as username)
+                .passwordParameter("password")  // Form field name
+                .permitAll()  // Allow everyone to access login page
             )
             
             // Logout configuration

@@ -15,7 +15,6 @@ import com.second_project.book_store.model.ChangePasswordRequestDto;
 import com.second_project.book_store.model.ForgotPasswordRequestDto;
 import com.second_project.book_store.model.ResetPasswordRequestDto;
 import com.second_project.book_store.model.UserDto;
-import com.second_project.book_store.service.ResetPasswordTokenService;
 import com.second_project.book_store.service.UserService;
 import com.second_project.book_store.service.VerificationTokenService;
 
@@ -32,14 +31,11 @@ public class UserController {
 
     private final UserService userService;
     private final VerificationTokenService verificationTokenService;
-    private final ResetPasswordTokenService resetPasswordTokenService;
 
     public UserController(UserService userService, 
-                         VerificationTokenService verificationTokenService,
-                         ResetPasswordTokenService resetPasswordTokenService){
+                         VerificationTokenService verificationTokenService){
         this.userService = userService;
         this.verificationTokenService = verificationTokenService;
-        this.resetPasswordTokenService = resetPasswordTokenService;
     }
 
     /**
@@ -144,16 +140,29 @@ public class UserController {
     }
 
     /**
-     * Step 1: Forgot Password - User requests password reset
-     * User provides email, receives reset link via email
+     * Forgot Password - User requests password reset
      * 
-     * Flow: POST /api/v1/users/forgot-password → Email sent → User clicks link → GET /api/v1/users/reset-password?token=xxx → POST /api/v1/users/reset-password
+     * IMPROVED FLOW:
+     * 1. User provides email → POST /api/v1/users/forgot-password
+     * 2. System sends email with reset link → http://frontend.com/reset-password?token=xxx
+     * 3. User clicks link → Frontend displays password reset form (token extracted from URL)
+     * 4. User submits form → POST /api/v1/users/reset-password?token=xxx
+     * 5. Backend validates token AND resets password in one step
+     * 
+     * Benefits:
+     * - Better UX (frontend handles form display)
+     * - More RESTful (single POST operation, no GET endpoint needed)
+     * - Simpler API (one less endpoint)
+     * 
+     * @param request ForgotPasswordRequestDto containing email
+     * @return Success message (always returns success for security - doesn't reveal if email exists)
      */
     @PostMapping("/forgot-password")
     public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequestDto request) {
         String applicationUrl = getApplicationUrl();
         
         // Request password reset - event will handle token creation and email
+        // Email link will point to frontend URL (configured in FrontendProperties)
         userService.requestPasswordReset(request.getEmail(), applicationUrl);
         
         return ResponseEntity.ok(Map.of(
@@ -163,40 +172,26 @@ public class UserController {
     }
 
     /**
-     * Step 2: Validate Reset Token - User clicks reset link from email
-     * This endpoint validates the token and can redirect to password reset form
+     * Reset Password - User submits new password with reset token
      * 
-     * Flow: User clicks email link → GET /api/v1/users/reset-password?token=xxx → Returns token validity
+     * IMPROVED FLOW:
+     * - Email link points to frontend: http://frontend.com/reset-password?token=xxx
+     * - Frontend displays password reset form (token extracted from URL)
+     * - User submits form → POST /api/v1/users/reset-password?token=xxx
+     * - Backend validates token AND resets password in one step
      * 
-     * Note: In a frontend application, this endpoint would typically redirect to a password reset form.
-     * For API-only, it just validates the token and returns success.
-     */
-    @GetMapping("/reset-password")
-    public ResponseEntity<Map<String, String>> validateResetToken(@RequestParam String token) {
-        // Verify token is valid (will throw exception if not)
-        resetPasswordTokenService.verifyToken(token);
-        
-        return ResponseEntity.ok(Map.of(
-            "message", 
-            "Token is valid. Please use POST /api/v1/users/reset-password with token and new password.",
-            "token",
-            token
-        ));
-    }
-
-    /**
-     * Step 3: Reset Password - User submits new password
+     * Token can be provided in:
+     * - Query parameter: POST /api/v1/users/reset-password?token=xxx (RECOMMENDED - better UX)
+     * - Request body: POST /api/v1/users/reset-password with token in JSON (alternative)
      * 
-     * Improved UX: Token can be provided in query parameter OR request body
-     * This allows users to click email link and submit password without copying token
+     * Security:
+     * - Token is validated before password reset
+     * - Token is deleted after successful password reset
+     * - Token expires after 15 minutes
      * 
-     * Flow Options:
-     * Option A (Better UX): 
-     *   - User clicks email link → GET /reset-password?token=xxx (validates)
-     *   - User submits form → POST /reset-password?token=xxx + password in body
-     * 
-     * Option B (Alternative):
-     *   - POST /reset-password with token + password in body
+     * @param token Reset token from email link (query parameter - recommended)
+     * @param request ResetPasswordRequestDto containing password and matchingPassword
+     * @return Success message
      */
     @PostMapping("/reset-password")
     public ResponseEntity<Map<String, String>> resetPassword(
@@ -204,7 +199,7 @@ public class UserController {
             @Valid @RequestBody ResetPasswordRequestDto request) {
         
         // Use token from query parameter if provided, otherwise use token from request body
-        // This improves UX - users can click email link and submit without copying token
+        // Query parameter is RECOMMENDED - allows frontend to extract token from URL and submit directly
         String resetToken = (token != null && !token.isBlank()) ? token : request.getToken();
         
         // Validate token is provided
@@ -221,7 +216,8 @@ public class UserController {
             request.getMatchingPassword()
         );
         
-        // Reset password - service will verify token and update password
+        // Reset password - service will verify token and update password in one step
+        // Token validation happens inside resetPassword() method
         userService.resetPassword(resetRequest);
         
         return ResponseEntity.ok(Map.of(
