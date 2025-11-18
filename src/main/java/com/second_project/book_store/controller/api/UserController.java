@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.second_project.book_store.model.ChangePasswordRequestDto;
 import com.second_project.book_store.model.ForgotPasswordRequestDto;
@@ -36,20 +35,6 @@ public class UserController {
                          VerificationTokenService verificationTokenService){
         this.userService = userService;
         this.verificationTokenService = verificationTokenService;
-    }
-
-    /**
-     * Extracts the base application URL from the current request.
-     * Uses Spring's ServletUriComponentsBuilder for reliable URL construction.
-     * Handles context path, port, and scheme automatically.
-     * Works correctly behind proxies and load balancers.
-     * 
-     * @return The base application URL (e.g., "http://localhost:8080" or "https://example.com/myapp")
-     */
-    private String getApplicationUrl() {
-        return ServletUriComponentsBuilder.fromCurrentContextPath()
-                .build()
-                .toUriString();
     }
 
     /**
@@ -110,11 +95,9 @@ public class UserController {
 
     @PostMapping("/register")
     public ResponseEntity<Map<String, String>> registerUser(@Valid @RequestBody UserDto userDto) {
-        // Get the application URL from the request using best practices
-        String applicationUrl = getApplicationUrl();
-        
         // Register user - event will handle token creation and email
-        userService.registerUser(userDto, applicationUrl);
+        // Email URL is configured via FrontendProperties (application.yml)
+        userService.registerUser(userDto);
 
         return ResponseEntity.ok(Map.of("message", "User registered successfully! Please check your email for verification link."));
     }
@@ -130,11 +113,9 @@ public class UserController {
 
     @GetMapping("/resend-verify-token")
     public ResponseEntity<Map<String, String>> resendVerificationToken(String email){
-        // Get the application URL from the request using best practices
-        String applicationUrl = getApplicationUrl();
-        
         // Resend token - event will handle token creation and email
-        userService.resendVerificationToken(email, applicationUrl);
+        // Email URL is configured via FrontendProperties (application.yml)
+        userService.resendVerificationToken(email);
 
         return ResponseEntity.ok(Map.of("message", "Verification token resent. Please check your email."));
     }
@@ -159,11 +140,9 @@ public class UserController {
      */
     @PostMapping("/forgot-password")
     public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequestDto request) {
-        String applicationUrl = getApplicationUrl();
-        
         // Request password reset - event will handle token creation and email
-        // Email link will point to frontend URL (configured in FrontendProperties)
-        userService.requestPasswordReset(request.getEmail(), applicationUrl);
+        // Email link URL is configured via FrontendProperties (application.yml)
+        userService.requestPasswordReset(request.getEmail());
         
         return ResponseEntity.ok(Map.of(
             "message", 

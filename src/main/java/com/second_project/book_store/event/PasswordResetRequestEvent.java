@@ -7,24 +7,21 @@ import com.second_project.book_store.entity.User;
 /**
  * Event published when a user requests a password reset.
  * Listeners will handle token creation and email sending.
+ * 
+ * Note: Email URL is configured via FrontendProperties (application.yml),
+ * not passed as parameter. This allows centralized configuration for different environments.
  */
 public class PasswordResetRequestEvent extends ApplicationEvent {
 
     private final User user;
-    private final String applicationUrl;
 
-    public PasswordResetRequestEvent(User user, String applicationUrl) {
+    public PasswordResetRequestEvent(User user) {
         super(user);
         this.user = user;
-        this.applicationUrl = applicationUrl;
     }
 
     public User getUser() {
         return user;
-    }
-
-    public String getApplicationUrl() {
-        return applicationUrl;
     }
 }
 

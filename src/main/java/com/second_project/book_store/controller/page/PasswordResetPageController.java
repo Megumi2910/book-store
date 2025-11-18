@@ -2,7 +2,9 @@ package com.second_project.book_store.controller.page;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -72,14 +74,25 @@ public class PasswordResetPageController {
      * 
      * @param token Reset token from form (query parameter)
      * @param request ResetPasswordRequestDto containing password and matchingPassword
+     * @param bindingResult Holds validation errors
+     * @param model Model for returning to form with errors
      * @param redirectAttributes For flash messages
      * @return Redirect to login page on success, back to form on error
      */
     @PostMapping("/reset-password")
     public String processResetPassword(
             @RequestParam String token,
-            @Valid ResetPasswordRequestDto request,
+            @Valid @ModelAttribute("resetPasswordRequest") ResetPasswordRequestDto request,
+            BindingResult bindingResult,
+            Model model,
             RedirectAttributes redirectAttributes) {
+        
+        // Check for validation errors (password length, matching passwords, etc.)
+        if (bindingResult.hasErrors()) {
+            // Return to form with validation errors displayed
+            model.addAttribute("token", token);
+            return "reset-password";
+        }
         
         try {
             // Create reset request with token

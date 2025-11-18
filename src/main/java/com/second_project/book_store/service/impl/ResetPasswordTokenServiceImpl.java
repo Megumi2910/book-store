@@ -26,7 +26,10 @@ public class ResetPasswordTokenServiceImpl implements ResetPasswordTokenService 
     public ResetPasswordToken createResetPasswordToken(User user) {
         // Delete existing token if any (user can only have one active reset token)
         Optional<ResetPasswordToken> existingToken = resetPasswordTokenRepository.findByUserUserId(user.getUserId());
-        existingToken.ifPresent(resetPasswordTokenRepository::delete);
+        if (existingToken.isPresent()) {
+            resetPasswordTokenRepository.delete(existingToken.get());
+            resetPasswordTokenRepository.flush(); // Force immediate deletion to avoid unique constraint violation
+        }
 
         // Create new token
         ResetPasswordToken resetPasswordToken = new ResetPasswordToken(user);

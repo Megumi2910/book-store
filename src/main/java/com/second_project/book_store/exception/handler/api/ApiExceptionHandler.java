@@ -15,10 +15,26 @@ import com.second_project.book_store.exception.ExpiredTokenException;
 import com.second_project.book_store.exception.InvalidPasswordException;
 import com.second_project.book_store.exception.ResetPasswordTokenNotFoundException;
 import com.second_project.book_store.exception.UserAlreadyEnabledException;
+import com.second_project.book_store.exception.UserAlreadyExistedException;
 import com.second_project.book_store.exception.UserNotFoundException;
 import com.second_project.book_store.exception.VerificationTokenNotFoundException;
 
-@RestControllerAdvice
+/**
+ * Global exception handler for REST API controllers.
+ * 
+ * KEY DIFFERENCES FROM PageExceptionHandler:
+ * - Uses @RestControllerAdvice (returns JSON automatically)
+ * - Returns ResponseEntity<Map<String, ?>> instead of view names
+ * - Provides structured JSON error responses for API clients
+ * 
+ * BEST PRACTICES:
+ * 1. Use consistent error response format
+ * 2. Include error codes for programmatic handling
+ * 3. Return appropriate HTTP status codes
+ * 4. Don't expose sensitive information (stack traces, etc.)
+ * 5. Log errors for debugging
+ */
+@RestControllerAdvice(basePackages = "com.second_project.book_store.controller.api")
 public class ApiExceptionHandler {
 
     @ExceptionHandler(ExpiredTokenException.class)
@@ -46,7 +62,14 @@ public class ApiExceptionHandler {
     public ResponseEntity<Map<String, String>> handleUserAlreadyEnabledException (UserAlreadyEnabledException exception){
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", "already verified", "message", exception.getMessage()));
+                .body(Map.of("error", "already_verified", "message", exception.getMessage()));
+    }
+
+    @ExceptionHandler(UserAlreadyExistedException.class)
+    public ResponseEntity<Map<String, String>> handleUserAlreadyExistedException (UserAlreadyExistedException exception){
+
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("error", "user_already_exists", "message", exception.getMessage()));
     }
 
     @ExceptionHandler(ResetPasswordTokenNotFoundException.class)

@@ -44,7 +44,7 @@ public class UserServiceImpl implements UserService{
 
     @Override
     @Transactional
-    public User registerUser(UserDto userDto, String applicationUrl) {
+    public User registerUser(UserDto userDto) {
         User user = new User();
 
         user.setFirstName(userDto.getFirstName());
@@ -59,14 +59,15 @@ public class UserServiceImpl implements UserService{
         user = userRepository.save(user);
         
         // Publish event - listeners will handle token creation, email sending, etc.
-        eventPublisher.publishEvent(new RegistrationCompleteEvent(user, applicationUrl));
+        // Email URL is configured via FrontendProperties (application.yml)
+        eventPublisher.publishEvent(new RegistrationCompleteEvent(user));
 
         return user;
     }
 
     @Override
     @Transactional
-    public void resendVerificationToken(String email, String applicationUrl) {
+    public void resendVerificationToken(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
         
@@ -76,12 +77,13 @@ public class UserServiceImpl implements UserService{
         }
         
         // Publish event - existing listener will handle token creation and email sending
-        eventPublisher.publishEvent(new RegistrationCompleteEvent(user, applicationUrl));
+        // Email URL is configured via FrontendProperties (application.yml)
+        eventPublisher.publishEvent(new RegistrationCompleteEvent(user));
     }
 
     @Override
     @Transactional
-    public void requestPasswordReset(String email, String applicationUrl) {
+    public void requestPasswordReset(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
         
@@ -91,7 +93,8 @@ public class UserServiceImpl implements UserService{
         }
         
         // Publish event - listener will handle token creation and email sending
-        eventPublisher.publishEvent(new PasswordResetRequestEvent(user, applicationUrl));
+        // Email URL is configured via FrontendProperties (application.yml)
+        eventPublisher.publishEvent(new PasswordResetRequestEvent(user));
     }
 
     @Override

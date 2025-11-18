@@ -7,19 +7,34 @@ import com.second_project.book_store.model.UserDto;
 
 public interface UserService {
 
-    User registerUser(UserDto userDto, String applicationUrl);
+    /**
+     * Registers a new user and sends a verification email.
+     * Email URL is configured via FrontendProperties (application.yml).
+     * 
+     * @param userDto User registration data
+     * @return The created User entity
+     */
+    User registerUser(UserDto userDto);
     
-    void resendVerificationToken(String email, String applicationUrl);
+    /**
+     * Resends the verification token email to the user.
+     * Email URL is configured via FrontendProperties (application.yml).
+     * 
+     * @param email User's email address
+     * @throws UserNotFoundException if user not found
+     * @throws UserAlreadyEnabledException if user is already verified
+     */
+    void resendVerificationToken(String email);
 
     /**
      * Initiates the password reset process.
      * Publishes an event that will create a reset token and send an email.
+     * Email URL is configured via FrontendProperties (application.yml).
      * 
      * @param email The email address of the user requesting password reset
-     * @param applicationUrl The base URL of the application (for constructing reset link)
      * @throws UserNotFoundException if user with given email doesn't exist
      */
-    void requestPasswordReset(String email, String applicationUrl);
+    void requestPasswordReset(String email);
 
     /**
      * Resets the user's password using a valid reset token.
