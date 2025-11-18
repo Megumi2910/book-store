@@ -33,7 +33,7 @@ public class ForgotPasswordPageController {
     }
     
     @PostMapping("/forgot-password")
-    public String sendForgotPasswordRequestInfo(
+    public String processForgotPasswordRequest(
             @Valid @ModelAttribute("forgotPasswordRequest") ForgotPasswordRequestDto request,
             BindingResult bindingResult,
             Model model,

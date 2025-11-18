@@ -5,12 +5,14 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -154,25 +156,68 @@ public class WebSecurityConfig {
     }
 
     /**
-     * Security filter chain configuration.
+     * Security filter chain for REST API endpoints (/api/**).
      * 
-     * BEST PRACTICES IMPLEMENTED:
-     * 1. Explicit UserDetailsService configuration (via authenticationProvider)
-     * 2. HTTP Basic Auth for REST API endpoints (/api/**)
-     * 3. Form login for web pages (if needed)
-     * 4. CORS configuration for cross-origin requests
-     * 5. CSRF protection disabled for REST APIs (stateless)
-     * 
-     * Authentication Methods:
-     * - REST APIs (/api/**): HTTP Basic Auth (username=email, password=password)
-     * - Web Pages: Form-based login (if you have web forms)
+     * Uses HTTP Basic Authentication for stateless API access.
+     * - Postman, mobile apps, and other REST clients send credentials with each request
+     * - No session management (stateless)
+     * - CSRF protection disabled
      * 
      * @param httpSecurity HttpSecurity builder
-     * @return Configured SecurityFilterChain
+     * @return Configured SecurityFilterChain for API endpoints
      * @throws Exception if configuration fails
      */
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+    @Order(1)  // Higher priority - evaluated first
+    SecurityFilterChain apiSecurityFilterChain(HttpSecurity httpSecurity) throws Exception {
+        
+        httpSecurity
+            // Apply this configuration only to /api/** endpoints
+            .securityMatcher("/api/**")
+            
+            // CORS configuration for cross-origin requests
+            .cors(Customizer.withDefaults())
+            
+            // CSRF protection disabled for REST APIs (stateless)
+            .csrf(csrf -> csrf.disable())
+            
+            // Authorization rules
+            .authorizeHttpRequests(authz -> authz
+                .requestMatchers("/api/v1/auth/**").permitAll()  // Public auth endpoints
+                .requestMatchers("/api/v1/users/register").permitAll()
+                .requestMatchers("/api/v1/users/verify-registration").permitAll()
+                .requestMatchers("/api/v1/users/resend-verify-token").permitAll()
+                .requestMatchers("/api/v1/users/forgot-password").permitAll()
+                .requestMatchers("/api/v1/users/reset-password").permitAll()
+                .anyRequest().authenticated()  // All other API endpoints require authentication
+            )
+            
+            // HTTP Basic Authentication for REST APIs
+            .httpBasic(Customizer.withDefaults())
+            
+            // Disable session creation for APIs (stateless)
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            );
+        
+        return httpSecurity.build();
+    }
+    
+    /**
+     * Security filter chain for web pages (Thymeleaf UI).
+     * 
+     * Uses Form Login for browser-based authentication.
+     * - Session-based authentication
+     * - Supports logout (unlike HTTP Basic Auth)
+     * - CSRF protection enabled
+     * 
+     * @param httpSecurity HttpSecurity builder
+     * @return Configured SecurityFilterChain for web pages
+     * @throws Exception if configuration fails
+     */
+    @Bean
+    @Order(2)  // Lower priority - evaluated after API filter chain
+    SecurityFilterChain webSecurityFilterChain(HttpSecurity httpSecurity) throws Exception {
 
         httpSecurity
             // CORS configuration for cross-origin requests
@@ -187,15 +232,9 @@ public class WebSecurityConfig {
                 .anyRequest().authenticated()
             )
             
-            // HTTP Basic Authentication for REST APIs
-            // BEST PRACTICE: REST APIs should use stateless authentication (HTTP Basic or JWT)
-            // This allows clients (Postman, mobile apps, frontend) to authenticate easily
-            .httpBasic(Customizer.withDefaults())
-            
             // Form login for web pages (Thymeleaf)
-            // Note: This works alongside HTTP Basic Auth
-            // - REST clients use HTTP Basic Auth (Authorization header)
-            // - Web browsers use form login (Thymeleaf)
+            // NO httpBasic() here - this allows logout to work properly!
+            // Browser-based sessions work perfectly with form login
             .formLogin(form -> form
                 .loginPage("/login")  // Custom login page
                 .loginProcessingUrl("/login")  // POST endpoint (Spring Security handles automatically)

@@ -47,7 +47,7 @@ public class RegistrationCompleteEventListener implements ApplicationListener<Re
         // Create verification URL using configured frontend base URL
         // With Thymeleaf: frontend and backend are on same server (e.g., http://127.0.0.1:8080)
         String frontendBaseUrl = frontendProperties.getBaseUrl();
-        String verificationUrl = frontendBaseUrl + "/api/v1/users/verify-registration?token=" + token.getToken();
+        String verificationUrl = frontendBaseUrl + "/verify-registration?token=" + token.getToken();
 
         // Create email information
         String toEmail = user.getEmail();
