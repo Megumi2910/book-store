@@ -61,6 +61,9 @@ public class User {
     @Column(nullable = false)
     // @NotNull -> This may check too early (before @PrePersist or @PreUpdate executes) so it's better not to pair this with those annotations.
     private LocalDateTime updatedAt;
+    
+    @Column(name = "last_verification_email_sent")
+    private LocalDateTime lastVerificationEmailSent;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Cart cart;
@@ -228,6 +231,14 @@ public class User {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+    
+    public LocalDateTime getLastVerificationEmailSent() {
+        return lastVerificationEmailSent;
+    }
+    
+    public void setLastVerificationEmailSent(LocalDateTime lastVerificationEmailSent) {
+        this.lastVerificationEmailSent = lastVerificationEmailSent;
     }
 
     public Cart getCart() {

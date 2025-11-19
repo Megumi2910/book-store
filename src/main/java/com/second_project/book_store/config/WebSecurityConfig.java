@@ -55,6 +55,7 @@ public class WebSecurityConfig {
         "/",
         "/verify-registration",
         "/register",
+        "/send-verify-email",
         "/resend-verify-token",
         "/reset-password",  // ✅ Thymeleaf page - GET and POST (must be public!)
         "/save-password",
@@ -76,6 +77,7 @@ public class WebSecurityConfig {
         "/api/**",  // REST APIs don't need CSRF (stateless)
         "/register",
         "/verify-registration",
+        "/send-verify-email",
         "/resend-verify-token",
         "/reset-password",  // ✅ Thymeleaf form - CSRF handled by Thymeleaf automatically
         "/save-password",

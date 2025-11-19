@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sending Verification Email</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .message-box {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 400px;
+        }
+    </style>
+</head>
+<body th:attr="onload=${isRateLimitError} ? '' : 'closeWithSuccess()'">
+    <div class="message-box">
+        <!-- Rate Limit Error -->
+        <div th:if="${isRateLimitError}">
+            <div class="text-danger mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
+                    <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
+                    <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
+                </svg>
+            </div>
+            <h4 class="text-danger">Please Wait</h4>
+            <p th:text="${message}">Please wait before requesting another verification email.</p>
+            <button onclick="window.close()" class="btn btn-secondary mt-3">Close</button>
+        </div>
+        
+        <!-- Success Message -->
+        <div th:unless="${isRateLimitError}">
+            <div class="text-success mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-check-circle" viewBox="0 0 16 16">
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                    <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+                </svg>
+            </div>
+            <h4 class="text-success">✓ Email Sent!</h4>
+            <p>Verification email sent successfully.<br>This window will close in <span id="countdown">3</span> seconds...</p>
+        </div>
+    </div>
+    
+    <script>
+        function closeWithSuccess() {
+            let countdown = 3;
+            const countdownElement = document.getElementById('countdown');
+            
+            const timer = setInterval(function() {
+                countdown--;
+                if (countdownElement) {
+                    countdownElement.textContent = countdown;
+                }
+                
+                if (countdown <= 0) {
+                    clearInterval(timer);
+                    window.close();
+                    // Fallback: if window.close() doesn't work
+                    setTimeout(function() {
+                        window.location.href = '/';
+                    }, 500);
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

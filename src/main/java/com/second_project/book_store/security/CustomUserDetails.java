@@ -126,6 +126,18 @@ public class CustomUserDetails implements UserDetails {
     }
 
     /**
+     * Returns whether the account is verified (email confirmed).
+     * Use this method in business logic to check verification status.
+     * 
+     * This is different from isEnabled() which is used by Spring Security.
+     * 
+     * @return true if account is verified, false otherwise
+     */
+    public boolean isVerified() {
+        return enabled;
+    }
+
+    /**
      * Returns the email as the username.
      * Spring Security uses this for authentication.getName()
      * 
@@ -196,14 +208,22 @@ public class CustomUserDetails implements UserDetails {
     }
 
     /**
-     * Account is enabled (verified).
-     * Uses the stored enabled flag.
+     * Account is enabled for Spring Security authentication.
      * 
-     * @return true if account is enabled/verified, false otherwise
+     * IMPORTANT: Always returns true to allow unverified users to log in.
+     * Spring Security checks this method during authentication.
+     * 
+     * To check if account is actually verified, use isVerified() instead.
+     * This allows us to:
+     * - Let unverified users log in
+     * - Show them a notification to verify their account
+     * - Restrict features for unverified users
+     * 
+     * @return true (always allows login regardless of verification status)
      */
     @Override
     public boolean isEnabled() {
-        return enabled;
+        return true; // Always allow login, verification checked separately
     }
 
     /**

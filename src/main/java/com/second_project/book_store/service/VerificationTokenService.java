@@ -11,11 +11,18 @@ public interface VerificationTokenService {
 
     VerificationToken findByUser(User user);
 
-    void verifyToken(String token);
+    User verifyTokenAndReturnUser(String token);
 
     void deleteToken(VerificationToken token);
 
-    void deleteExpiredTokens();
+    void deleteExpiredToken();
 
+    void deleteInvalidToken();
+
+    void deleteByToken(String token);
+
+    User findUserByToken(String token);
+
+    void deleteByUserId(Long userId);
 }
 

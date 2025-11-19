@@ -44,6 +44,35 @@
         </div>
     </nav>
 
+    <!-- Verification Notification Banner (for unverified users) -->
+    <div class="alert alert-warning alert-dismissible fade show m-0 border-0 rounded-0 text-center" 
+         role="alert" 
+         sec:authorize="isAuthenticated()"
+         th:if="${isAuthenticated and !isVerified}">
+        <div class="container">
+            <strong>⚠️ Account Not Verified</strong>
+            <span class="mx-2">|</span>
+            <span>Please verify your email to access all features.</span>
+            <span class="mx-2">|</span>
+            <span>Click here: </span>
+            <a href="javascript:void(0)" 
+               id="sendEmailLink"
+               th:onclick="'openSendVerifyEmailPopup()'"
+               th:classappend="${emailCooldownSeconds > 0} ? 'disabled' : ''"
+               th:style="${emailCooldownSeconds > 0} ? 'pointer-events: none; opacity: 0.5; color: gray;' : ''"
+               class="alert-link fw-bold text-decoration-underline">
+                <span th:text="${emailSentBefore} ? 'Resend Email' : 'Send Email'">Send Email</span>
+                <span id="cooldownText" th:if="${emailCooldownSeconds > 0}" 
+                      th:text="'(' + ${emailCooldownSeconds} + 's)'">(60s)</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Hidden data for JavaScript -->
+    <div id="emailCooldownData" 
+         th:attr="data-initial-cooldown=${emailCooldownSeconds}"
+         style="display: none;"></div>
+
     <!-- Main Content -->
     <div class="container mt-5">
         <!-- Welcome Message -->
@@ -96,6 +125,91 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Send Verification Email Popup Script -->
+    <script>
+        function openSendVerifyEmailPopup() {
+            // Open verification email page in a small popup window
+            const width = 500;
+            const height = 300;
+            const left = (screen.width / 2) - (width / 2);
+            const top = (screen.height / 2) - (height / 2);
+            
+            const popup = window.open(
+                '/send-verify-email',
+                'sendVerifyEmailPopup',
+                `width=${width},height=${height},left=${left},top=${top},resizable=no,scrollbars=no,status=no,toolbar=no,menubar=no`
+            );
+            
+            // Focus the popup window
+            if (popup) {
+                popup.focus();
+            }
+            
+            // Start cooldown after successful send
+            startCooldownTimer(60);
+        }
+        
+        // Countdown timer for rate limiting
+        function startCooldownTimer(seconds) {
+            const link = document.getElementById('sendEmailLink');
+            const cooldownText = document.getElementById('cooldownText');
+            const linkTextSpan = link.querySelector('span:first-child');
+            
+            if (!link) return;
+            
+            // Disable link
+            link.style.pointerEvents = 'none';
+            link.style.opacity = '0.5';
+            link.style.color = 'gray';
+            link.classList.add('disabled');
+            
+            // Change text to "Resend Email"
+            if (linkTextSpan) {
+                linkTextSpan.textContent = 'Resend Email';
+            }
+            
+            // Create cooldown text if it doesn't exist
+            if (!cooldownText) {
+                const newCooldownText = document.createElement('span');
+                newCooldownText.id = 'cooldownText';
+                link.appendChild(newCooldownText);
+            }
+            
+            let remaining = seconds;
+            const timer = setInterval(function() {
+                remaining--;
+                const cooldownElement = document.getElementById('cooldownText');
+                if (cooldownElement) {
+                    cooldownElement.textContent = '(' + remaining + 's)';
+                }
+                
+                if (remaining <= 0) {
+                    clearInterval(timer);
+                    // Re-enable link
+                    link.style.pointerEvents = '';
+                    link.style.opacity = '';
+                    link.style.color = '';
+                    link.classList.remove('disabled');
+                    // Remove countdown text
+                    if (cooldownElement) {
+                        cooldownElement.remove();
+                    }
+                }
+            }, 1000);
+        }
+        
+        // Initialize cooldown on page load if needed
+        document.addEventListener('DOMContentLoaded', function() {
+            const cooldownData = document.getElementById('emailCooldownData');
+            if (cooldownData) {
+                const initialCooldown = parseInt(cooldownData.getAttribute('data-initial-cooldown') || '0');
+                if (initialCooldown > 0) {
+                    startCooldownTimer(initialCooldown);
+                }
+            }
+        });
+    </script>
 </body>
 </html>
 

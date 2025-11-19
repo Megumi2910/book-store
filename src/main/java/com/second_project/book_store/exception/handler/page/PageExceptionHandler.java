@@ -8,6 +8,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.second_project.book_store.exception.ExpiredTokenException;
 import com.second_project.book_store.exception.InvalidPasswordException;
+import com.second_project.book_store.exception.RateLimitException;
 import com.second_project.book_store.exception.ResetPasswordTokenNotFoundException;
 import com.second_project.book_store.exception.UserAlreadyEnabledException;
 import com.second_project.book_store.exception.UserAlreadyExistedException;
@@ -86,6 +87,20 @@ public class PageExceptionHandler {
                                                     RedirectAttributes redirectAttributes) {
         redirectAttributes.addFlashAttribute("info", ex.getMessage());
         return "redirect:/login";
+    }
+
+    /**
+     * Handles rate limit exceptions
+     * Occurs when user tries to send verification email too frequently
+     * Shows error page with countdown
+     */
+    @ExceptionHandler(RateLimitException.class)
+    public String handleRateLimitException(RateLimitException ex, Model model) {
+        model.addAttribute("error", "Rate Limit Exceeded");
+        model.addAttribute("message", ex.getMessage());
+        model.addAttribute("secondsRemaining", ex.getSecondsRemaining());
+        model.addAttribute("isRateLimitError", true);
+        return "send-verify-email"; // Return to same page with error message
     }
 
     /**

@@ -17,14 +17,16 @@ public interface UserService {
     User registerUser(UserDto userDto);
     
     /**
-     * Resends the verification token email to the user.
+     * Request to send the verification token email to the user via event publisher.
      * Email URL is configured via FrontendProperties (application.yml).
+     * Rate limited to prevent abuse (60 seconds between emails).
      * 
      * @param email User's email address
      * @throws UserNotFoundException if user not found
      * @throws UserAlreadyEnabledException if user is already verified
+     * @throws RateLimitException if email was sent too recently
      */
-    void resendVerificationToken(String email);
+    void requestVerificationEmail(String email);
 
     /**
      * Initiates the password reset process.

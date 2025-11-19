@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.second_project.book_store.entity.User;
 import com.second_project.book_store.entity.VerificationToken;
 
 @Repository
@@ -21,11 +22,22 @@ public interface VerificationTokenRepository extends JpaRepository<VerificationT
     @Modifying
     @Transactional
     @Query("DELETE FROM VerificationToken vt WHERE vt.expiredAt < CURRENT_TIMESTAMP")
-    void deleteExpiredTokens();
+    void deleteExpiredToken();
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM VerificationToken vt WHERE vt.isValid IS FALSE")
+    void deleteInvalidToken();
+
+    @Modifying
+    @Transactional
+    void deleteByToken(String token);
 
     @Modifying
     @Transactional
     @Query("DELETE FROM VerificationToken vt WHERE vt.user.userId = :userId")
     void deleteByUserId(@Param("userId") Long userId);
+
+    User findUserByToken(String token);
 }
 

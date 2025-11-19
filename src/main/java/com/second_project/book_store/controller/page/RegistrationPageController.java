@@ -5,15 +5,13 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.second_project.book_store.model.UserDto;
 import com.second_project.book_store.service.UserService;
 
 import jakarta.validation.Valid;
-
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 
 
@@ -46,9 +44,9 @@ public class RegistrationPageController {
 
         userService.registerUser(userDto);
         
-        redirectAttributes.addFlashAttribute("success", "User registered successfully. Please check your email to activate your account.");
+        redirectAttributes.addFlashAttribute("registration_successful", "User registered successfully. Please verify your account after logging in.");
 
-        return "redirect:/register";
+        return "redirect:/login";
     }
     
 

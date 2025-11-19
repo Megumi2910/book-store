@@ -1,0 +1,82 @@
+.verification-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.verification-card {
+    max-width: 600px;
+    width: 100%;
+    margin: 20px;
+}
+
+.success-icon {
+    font-size: 5rem;
+    color: #28a745;
+    animation: scaleIn 0.5s ease-out;
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.success-title {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-top: 1rem;
+    color: #212529;
+}
+
+.success-message {
+    font-size: 1.1rem;
+    color: #6c757d;
+    margin-top: 1rem;
+    line-height: 1.6;
+}
+
+.action-buttons {
+    margin-top: 2rem;
+}
+
+.action-buttons .btn {
+    transition: all 0.3s ease;
+}
+
+.action-buttons .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 576px) {
+    .verification-card {
+        margin: 10px;
+    }
+    
+    .success-icon {
+        font-size: 4rem;
+    }
+    
+    .success-title {
+        font-size: 1.5rem;
+    }
+    
+    .success-message {
+        font-size: 1rem;
+    }
+    
+    .action-buttons .btn {
+        display: block;
+        width: 100%;
+        margin: 0.5rem 0 !important;
+    }
+}
+
