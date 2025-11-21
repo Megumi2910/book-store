@@ -18,6 +18,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotNull;
 
 @Entity
@@ -29,6 +30,9 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
+
+    @Version
+    private Long version;
 
     @Column(nullable = false)
     private String firstName;
@@ -239,6 +243,14 @@ public class User {
     
     public void setLastVerificationEmailSent(LocalDateTime lastVerificationEmailSent) {
         this.lastVerificationEmailSent = lastVerificationEmailSent;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 
     public Cart getCart() {

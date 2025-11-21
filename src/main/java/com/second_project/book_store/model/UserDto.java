@@ -1,6 +1,7 @@
 package com.second_project.book_store.model;
 
 import com.second_project.book_store.annotation.PasswordMatches;
+import com.second_project.book_store.annotation.StrongPassword;
 import com.second_project.book_store.annotation.ValidEmail;
 
 import jakarta.validation.constraints.NotBlank;
@@ -48,7 +49,8 @@ public class UserDto {
     private String address;
 
     @NotBlank(message = "Password is required")
-    @Size(min = 8, max = 50, message = "Password must be between 8 and 50 characters")
+    @StrongPassword
+    @Size(max = 50, message = "Password must not exceed 50 characters")
     private String password;
 
     @NotBlank(message = "Password confirmation is required")

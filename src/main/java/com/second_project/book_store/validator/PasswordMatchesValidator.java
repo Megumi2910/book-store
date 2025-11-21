@@ -1,5 +1,8 @@
 package com.second_project.book_store.validator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
@@ -15,6 +18,8 @@ import java.lang.reflect.Method;
  * making it reusable across different DTO classes.
  */
 public class PasswordMatchesValidator implements ConstraintValidator<PasswordMatches, Object> {
+    
+    private static final Logger logger = LoggerFactory.getLogger(PasswordMatchesValidator.class);
     
     @Override
     public void initialize(PasswordMatches constraintAnnotation) {
@@ -56,9 +61,9 @@ public class PasswordMatchesValidator implements ConstraintValidator<PasswordMat
             
         } catch (Exception e) {
             // If reflection fails, log and return false
-            System.err.println("Error validating passwords: " + e.getMessage());
+             logger.error("Error validating passwords: {}", e.getMessage(), e);
             context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate("Error validating password fields: " + e.getMessage())
+            context.buildConstraintViolationWithTemplate("Error validating password fields")
                    .addConstraintViolation();
             return false;
         }

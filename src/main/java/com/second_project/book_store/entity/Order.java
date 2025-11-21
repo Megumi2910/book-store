@@ -23,18 +23,26 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "orders", indexes = {
     @Index(name = "idx_order_date", columnList = "orderDate"),
-    @Index(name = "idx_order_status", columnList = "orderStatus")
+    @Index(name = "idx_order_status", columnList = "orderStatus"),
+    // Composite indexes for common query patterns
+    @Index(name = "idx_user_order_date", columnList = "user_id, orderDate"),
+    @Index(name = "idx_user_status", columnList = "user_id, orderStatus"),
+    @Index(name = "idx_status_date", columnList = "orderStatus, orderDate")
 })
 public class Order {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long orderId;
+
+    @Version
+    private Long version;
 
     @Column(
         nullable = false,
@@ -185,6 +193,14 @@ public class Order {
 
     public Payment getPayment() {
         return payment;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 
     @Override

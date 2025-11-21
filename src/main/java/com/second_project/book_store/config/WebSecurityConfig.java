@@ -253,6 +253,40 @@ public class WebSecurityConfig {
                 .invalidateHttpSession(true)
                 .deleteCookies("JSESSIONID")
                 .permitAll()
+            )
+            
+            // Security Headers - Protection against common web vulnerabilities
+            .headers(headers -> headers
+                // Prevent clickjacking attacks by denying the page to be displayed in frames
+                .frameOptions(frame -> frame.deny())
+                
+                // Prevent MIME type sniffing
+                .contentTypeOptions(contentType -> contentType.disable()) // Already enabled by default
+                
+                // XSS Protection (legacy, but still useful for older browsers)
+                .xssProtection(xss -> xss
+                    .headerValue(org.springframework.security.web.header.writers.XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK)
+                )
+                
+                // Content Security Policy - control what resources can be loaded
+                .contentSecurityPolicy(csp -> csp
+                    .policyDirectives("default-src 'self'; " +
+                                    "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
+                                    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
+                                    "img-src 'self' data: https:; " +
+                                    "font-src 'self' https://cdn.jsdelivr.net;")
+                )
+                
+                // Referrer Policy - control how much referrer information is sent
+                .referrerPolicy(referrer -> referrer
+                    .policy(org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
+                )
+                
+                // Permissions Policy (formerly Feature Policy)
+                // Note: Deprecated in Spring Security 6.4, but still functional
+                .permissionsPolicy(permissions -> permissions
+                    .policy("geolocation=(), microphone=(), camera=()")
+                )
             );
 
         return httpSecurity.build();

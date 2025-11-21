@@ -20,7 +20,14 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
 @Entity
-@Table(uniqueConstraints = @UniqueConstraint(name = "UK_USER_BOOK_REVIEW", columnNames = {"user_id", "book_id"}))
+@Table(
+    uniqueConstraints = @UniqueConstraint(name = "UK_USER_BOOK_REVIEW", columnNames = {"user_id", "book_id"}),
+    indexes = {
+        @jakarta.persistence.Index(name = "idx_book_created", columnList = "book_id, createdAt"),
+        @jakarta.persistence.Index(name = "idx_book_rating", columnList = "book_id, rating"),
+        @jakarta.persistence.Index(name = "idx_user_created", columnList = "user_id, createdAt")
+    }
+)
 public class Review {
 
     @Id

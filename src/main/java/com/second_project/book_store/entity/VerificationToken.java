@@ -21,6 +21,7 @@ import jakarta.persistence.Index;
 })
 public class VerificationToken {
 
+    // Default duration - can be overridden via TokenProperties
     private static final int TOKEN_DURATION = 10;
 
     @Id
@@ -51,6 +52,13 @@ public class VerificationToken {
         this.user = user;
         this.token = UUID.randomUUID().toString();
         this.expiredAt = LocalDateTime.now().plusMinutes(TOKEN_DURATION);
+        this.isValid = true;
+    }
+
+    public VerificationToken(User user, int durationMinutes) {
+        this.user = user;
+        this.token = UUID.randomUUID().toString();
+        this.expiredAt = LocalDateTime.now().plusMinutes(durationMinutes);
         this.isValid = true;
     }
 

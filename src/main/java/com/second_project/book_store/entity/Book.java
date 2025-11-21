@@ -21,6 +21,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotNull;
 
 @Entity
@@ -34,6 +35,9 @@ public class Book {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long bookId;
+
+    @Version
+    private Long version;
     
     @Column(nullable = false)
     private String title;
@@ -212,6 +216,14 @@ public class Book {
 
     public BookDetail getBookDetail() {
         return bookDetail;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 
     @Override

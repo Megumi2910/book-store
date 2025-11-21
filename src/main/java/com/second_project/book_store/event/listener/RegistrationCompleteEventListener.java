@@ -1,6 +1,7 @@
 package com.second_project.book_store.event.listener;
 
 import org.springframework.context.ApplicationListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import com.second_project.book_store.config.properties.FrontendProperties;
@@ -36,6 +37,15 @@ public class RegistrationCompleteEventListener implements ApplicationListener<Re
         this.frontendProperties = frontendProperties;
     }
 
+    /**
+     * Handle registration complete event asynchronously.
+     * 
+     * This runs in a separate thread pool so the HTTP request returns immediately
+     * without waiting for email to be sent.
+     * 
+     * @param event The registration complete event
+     */
+    @Async
     @Override
     public void onApplicationEvent(RegistrationCompleteEvent event) {
         // Get the user from the event

@@ -15,6 +15,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotNull;
 
 @Entity
@@ -24,6 +25,9 @@ public class Cart {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long cartId;
+
+    @Version
+    private Long version;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(
@@ -82,6 +86,14 @@ public class Cart {
 
     public void setCartItems(List<CartItem> cartItems) {
         this.cartItems = cartItems;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 
     @Override

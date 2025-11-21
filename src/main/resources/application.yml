@@ -29,8 +29,8 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/book_store-dev?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=GMT%2B7&characterEncoding=UTF-8
-    username: root
-    password: ${DB_PASSWORD:123}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD}
     hikari:
       maximum-pool-size: 5
       minimum-idle: 2
@@ -43,7 +43,7 @@ spring:
       hibernate.format_sql: true
       hibernate.jdbc.time_zone: GMT+7
     show-sql: true
-  jpa.open-in-view: true
+    open-in-view: false  # Best practice: Disable to prevent lazy loading issues
   jackson:
     time-zone: GMT+7
 
@@ -54,8 +54,9 @@ admin:
   last-name: ${ADMIN_LAST_NAME:User}
   email: ${ADMIN_EMAIL}
 
-# CORS configuration - used by WebSecurityConfig
+# Application configuration
 app:
+  # CORS configuration - used by WebSecurityConfig
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8080}
   # Frontend URL configuration - used for password reset and email verification links
@@ -64,6 +65,12 @@ app:
   # For separate frontend (React/Vue): Use http://localhost:3000
   frontend:
     base-url: ${FRONTEND_BASE_URL:http://127.0.0.1:8080}
+  # Security token configuration
+  security:
+    token:
+      verification-duration-minutes: 10
+      reset-password-duration-minutes: 15
+      rate-limit-seconds: 60
 
 logging:
   level:

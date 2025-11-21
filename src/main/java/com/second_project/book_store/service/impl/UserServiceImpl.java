@@ -8,6 +8,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.second_project.book_store.config.MetricsConfig;
+import com.second_project.book_store.config.properties.TokenProperties;
 import com.second_project.book_store.entity.ResetPasswordToken;
 import com.second_project.book_store.entity.User;
 import com.second_project.book_store.entity.User.UserRole;
@@ -17,6 +19,7 @@ import com.second_project.book_store.exception.InvalidPasswordException;
 import com.second_project.book_store.exception.RateLimitException;
 import com.second_project.book_store.exception.ResetPasswordTokenNotFoundException;
 import com.second_project.book_store.exception.UserAlreadyEnabledException;
+import com.second_project.book_store.exception.UserAlreadyExistedException;
 import com.second_project.book_store.exception.UserNotFoundException;
 import com.second_project.book_store.model.ChangePasswordRequestDto;
 import com.second_project.book_store.model.ResetPasswordRequestDto;
@@ -34,16 +37,22 @@ public class UserServiceImpl implements UserService{
     private final ApplicationEventPublisher eventPublisher;
     private final ResetPasswordTokenService resetPasswordTokenService;
     private final ResetPasswordTokenRepository resetPasswordTokenRepository;
+    private final TokenProperties tokenProperties;
+    private final MetricsConfig metricsConfig;
 
     public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder,
                           ApplicationEventPublisher eventPublisher,
                           ResetPasswordTokenService resetPasswordTokenService,
-                          ResetPasswordTokenRepository resetPasswordTokenRepository){
+                          ResetPasswordTokenRepository resetPasswordTokenRepository,
+                          TokenProperties tokenProperties,
+                          MetricsConfig metricsConfig){
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.eventPublisher = eventPublisher;
         this.resetPasswordTokenService = resetPasswordTokenService;
         this.resetPasswordTokenRepository = resetPasswordTokenRepository;
+        this.tokenProperties = tokenProperties;
+        this.metricsConfig = metricsConfig;
     }
 
     /**
@@ -52,6 +61,11 @@ public class UserServiceImpl implements UserService{
     @Override
     @Transactional
     public User registerUser(UserDto userDto) {
+        // Check if user with email already exists
+        if (userRepository.findByEmailIgnoreCase(userDto.getEmail().trim()).isPresent()) {
+            throw new UserAlreadyExistedException("User already exists with email: " + userDto.getEmail());
+        }
+        
         User user = new User();
 
         user.setFirstName(userDto.getFirstName());
@@ -64,6 +78,9 @@ public class UserServiceImpl implements UserService{
         // user.setEnabled(false); default is false already
 
         user = userRepository.save(user);
+
+        // Track metric
+        metricsConfig.incrementUserRegistrations();
 
         return user;
     }
@@ -79,14 +96,18 @@ public class UserServiceImpl implements UserService{
             throw new UserAlreadyEnabledException("User is already verified!");
         }
         
-        // Rate limiting: Check if email was sent recently (within 60 seconds)
+        // Rate limiting: Check if email was sent recently (using configured rate limit)
         if (user.getLastVerificationEmailSent() != null) {
             LocalDateTime now = LocalDateTime.now();
             long secondsSinceLastEmail = ChronoUnit.SECONDS.between(
                 user.getLastVerificationEmailSent(), now);
             
-            if (secondsSinceLastEmail < 60) {
-                long secondsRemaining = 60 - secondsSinceLastEmail;
+            long rateLimitSeconds = tokenProperties.getRateLimitSeconds();
+            if (secondsSinceLastEmail < rateLimitSeconds) {
+                long secondsRemaining = rateLimitSeconds - secondsSinceLastEmail;
+                // Track rate limit exceeded
+                metricsConfig.incrementRateLimitExceeded();
+                
                 throw new RateLimitException(
                     "Please wait before requesting another verification email. Try again in " 
                     + secondsRemaining + " seconds.", 

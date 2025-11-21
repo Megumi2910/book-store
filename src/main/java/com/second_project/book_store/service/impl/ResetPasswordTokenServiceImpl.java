@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.second_project.book_store.config.properties.TokenProperties;
 import com.second_project.book_store.entity.ResetPasswordToken;
 import com.second_project.book_store.entity.User;
 import com.second_project.book_store.exception.ExpiredTokenException;
@@ -16,9 +17,12 @@ import com.second_project.book_store.service.ResetPasswordTokenService;
 public class ResetPasswordTokenServiceImpl implements ResetPasswordTokenService {
 
     private final ResetPasswordTokenRepository resetPasswordTokenRepository;
+    private final TokenProperties tokenProperties;
 
-    public ResetPasswordTokenServiceImpl(ResetPasswordTokenRepository resetPasswordTokenRepository) {
+    public ResetPasswordTokenServiceImpl(ResetPasswordTokenRepository resetPasswordTokenRepository,
+                                        TokenProperties tokenProperties) {
         this.resetPasswordTokenRepository = resetPasswordTokenRepository;
+        this.tokenProperties = tokenProperties;
     }
 
     @Override
@@ -31,8 +35,11 @@ public class ResetPasswordTokenServiceImpl implements ResetPasswordTokenService 
             resetPasswordTokenRepository.flush(); // Force immediate deletion to avoid unique constraint violation
         }
 
-        // Create new token
-        ResetPasswordToken resetPasswordToken = new ResetPasswordToken(user);
+        // Create new token with configured duration
+        ResetPasswordToken resetPasswordToken = new ResetPasswordToken(
+            user,
+            tokenProperties.getResetPasswordDurationMinutes()
+        );
         return resetPasswordTokenRepository.save(resetPasswordToken);
     }
 

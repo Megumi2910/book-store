@@ -1,6 +1,7 @@
 package com.second_project.book_store.event.listener;
 
 import org.springframework.context.ApplicationListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import com.second_project.book_store.config.properties.FrontendProperties;
@@ -43,6 +44,15 @@ public class PasswordResetRequestEventListener implements ApplicationListener<Pa
         this.frontendProperties = frontendProperties;
     }
 
+    /**
+     * Handle password reset request event asynchronously.
+     * 
+     * This runs in a separate thread pool so the HTTP request returns immediately
+     * without waiting for email to be sent.
+     * 
+     * @param event The password reset request event
+     */
+    @Async
     @Override
     public void onApplicationEvent(PasswordResetRequestEvent event) {
         // Get the user from the event

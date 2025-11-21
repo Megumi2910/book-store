@@ -27,6 +27,7 @@ import jakarta.persistence.Table;
 })
 public class ResetPasswordToken {
 
+    // Default duration - can be overridden via TokenProperties
     private static final int TOKEN_DURATION_MINUTES = 15;
 
     @Id
@@ -55,12 +56,25 @@ public class ResetPasswordToken {
 
     /**
      * Creates a new reset password token for the given user.
-     * Token expires in 15 minutes.
+     * Token expires in 15 minutes (default).
      */
     public ResetPasswordToken(User user) {
         this.user = user;
         this.token = UUID.randomUUID().toString();
         this.expiredAt = LocalDateTime.now().plusMinutes(TOKEN_DURATION_MINUTES);
+        this.isValid = true;
+    }
+
+    /**
+     * Creates a new reset password token for the given user with custom duration.
+     * 
+     * @param user The user for whom the token is created
+     * @param durationMinutes Token expiration duration in minutes
+     */
+    public ResetPasswordToken(User user, int durationMinutes) {
+        this.user = user;
+        this.token = UUID.randomUUID().toString();
+        this.expiredAt = LocalDateTime.now().plusMinutes(durationMinutes);
         this.isValid = true;
     }
 

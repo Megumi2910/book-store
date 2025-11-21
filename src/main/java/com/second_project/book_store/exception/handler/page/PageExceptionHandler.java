@@ -1,5 +1,7 @@
 package com.second_project.book_store.exception.handler.page;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -35,6 +37,8 @@ import jakarta.servlet.http.HttpServletRequest;
  */
 @ControllerAdvice(basePackages = "com.second_project.book_store.controller.page")
 public class PageExceptionHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(PageExceptionHandler.class);
 
     /**
      * Handles expired token exceptions (verification or password reset)
@@ -177,8 +181,8 @@ public class PageExceptionHandler {
                                         HttpServletRequest request,
                                         Model model) {
         // Log the full exception for debugging (don't show to user)
-        System.err.println("Unexpected error: " + ex.getMessage());
-        ex.printStackTrace();
+        logger.error("Unexpected error occurred at path: {} - Error: {}", 
+                     request.getRequestURI(), ex.getMessage(), ex);
         
         model.addAttribute("error", "Something Went Wrong");
         model.addAttribute("message", "An unexpected error occurred. Please try again later.");

@@ -2,6 +2,7 @@ package com.second_project.book_store.service.impl;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.second_project.book_store.config.properties.TokenProperties;
 import com.second_project.book_store.entity.User;
 import com.second_project.book_store.entity.VerificationToken;
 import com.second_project.book_store.exception.ExpiredTokenException;
@@ -19,14 +20,17 @@ public class VerificationTokenServiceImpl implements VerificationTokenService {
 
     private final VerificationTokenRepository verificationTokenRepository;
     private final UserRepository userRepository;
+    private final TokenProperties tokenProperties;
     
     @PersistenceContext
     private EntityManager entityManager;
 
     public VerificationTokenServiceImpl(VerificationTokenRepository verificationTokenRepository,
-                                       UserRepository userRepository) {
+                                       UserRepository userRepository,
+                                       TokenProperties tokenProperties) {
         this.verificationTokenRepository = verificationTokenRepository;
         this.userRepository = userRepository;
+        this.tokenProperties = tokenProperties;
     }
 
     @Override
@@ -63,8 +67,11 @@ public class VerificationTokenServiceImpl implements VerificationTokenService {
         freshUser.setVerificationToken(null);
 
         // (Step 6: Create new token with FRESH user)
-        // Create new token with fresh User entity
-        VerificationToken verificationToken = new VerificationToken(freshUser);
+        // Create new token with fresh User entity using configured duration
+        VerificationToken verificationToken = new VerificationToken(
+            freshUser, 
+            tokenProperties.getVerificationDurationMinutes()
+        );
         return verificationTokenRepository.save(verificationToken);
     }
 

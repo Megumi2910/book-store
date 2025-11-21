@@ -1,5 +1,7 @@
 package com.second_project.book_store.scheduler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +19,7 @@ import com.second_project.book_store.service.VerificationTokenService;
 @Component
 public class TokenCleanupScheduler {
 
+    private static final Logger logger = LoggerFactory.getLogger(TokenCleanupScheduler.class);
     private final VerificationTokenService verificationTokenService;
 
     public TokenCleanupScheduler(VerificationTokenService verificationTokenService) {
@@ -38,11 +41,10 @@ public class TokenCleanupScheduler {
     public void cleanupExpiredVerificationTokens() {
         try {
             verificationTokenService.deleteExpiredToken();
-            System.out.println("✓ Successfully cleaned up expired verification tokens at " 
-                + java.time.LocalDateTime.now());
+            logger.info("Successfully cleaned up expired verification tokens at {}", 
+                java.time.LocalDateTime.now());
         } catch (Exception e) {
-            System.err.println("✗ Error cleaning up expired verification tokens: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Error cleaning up expired verification tokens: {}", e.getMessage(), e);
         }
     }
 
@@ -54,11 +56,10 @@ public class TokenCleanupScheduler {
     public void cleanupInvalidVerificationTokens() {
         try {
             verificationTokenService.deleteInvalidToken();
-            System.out.println("✓ Successfully cleaned up invalid verification tokens at " 
-                + java.time.LocalDateTime.now());
+            logger.info("Successfully cleaned up invalid verification tokens at {}", 
+                java.time.LocalDateTime.now());
         } catch (Exception e) {
-            System.err.println("✗ Error cleaning up invalid verification tokens: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Error cleaning up invalid verification tokens: {}", e.getMessage(), e);
         }
     }
 
@@ -71,10 +72,9 @@ public class TokenCleanupScheduler {
     //     try {
     //         verificationTokenService.deleteExpiredToken();
     //         verificationTokenService.deleteInvalidToken();
-    //         System.out.println("✓ Successfully cleaned up tokens at " 
-    //             + java.time.LocalDateTime.now());
+    //         logger.info("Successfully cleaned up tokens at {}", java.time.LocalDateTime.now());
     //     } catch (Exception e) {
-    //         System.err.println("✗ Error cleaning up tokens: " + e.getMessage());
+    //         logger.error("Error cleaning up tokens: {}", e.getMessage(), e);
     //     }
     // }
 }
