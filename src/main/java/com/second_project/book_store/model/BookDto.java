@@ -1,6 +1,7 @@
 package com.second_project.book_store.model;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Set;
 
@@ -51,7 +52,7 @@ public class BookDto {
     @Size(max = 255, message = "Publisher must not exceed 255 characters")
     private String publisher;
 
-    private LocalDateTime publishDate;
+    private LocalDate publishDate;
 
     @NotNull(message = "At least one genre must be selected")
     @Size(min = 1, message = "At least one genre must be selected")
@@ -69,7 +70,7 @@ public class BookDto {
     public BookDto() {}
 
     public BookDto(Long bookId, String title, String author, String isbn, String description, String imageUrl,
-                   BigDecimal price, Integer quantity, String publisher, LocalDateTime publishDate,
+                   BigDecimal price, Integer quantity, String publisher, LocalDate publishDate,
                    Set<Long> genreIds, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.bookId = bookId;
         this.title = title;
@@ -159,11 +160,11 @@ public class BookDto {
         this.publisher = publisher;
     }
 
-    public LocalDateTime getPublishDate() {
+    public LocalDate getPublishDate() {
         return publishDate;
     }
 
-    public void setPublishDate(LocalDateTime publishDate) {
+    public void setPublishDate(LocalDate publishDate) {
         this.publishDate = publishDate;
     }
 

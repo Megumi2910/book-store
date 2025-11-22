@@ -1,6 +1,7 @@
 package com.second_project.book_store.entity;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
@@ -38,7 +39,7 @@ public class BookDetail {
     private Integer quantity; // Changed from Long to Integer for consistency
     
     private String publisher;
-    private LocalDateTime publishDate;
+    private LocalDate publishDate;
 
     @Column(nullable = false)
     @NotNull
@@ -61,7 +62,7 @@ public class BookDetail {
     public BookDetail(){}
 
     public BookDetail(Long bookDetailId, String description, String imageUrl, BigDecimal price, Integer quantity,
-            String publisher, LocalDateTime publishDate, LocalDateTime createdAt, LocalDateTime updatedAt, Book book) {
+            String publisher, LocalDate publishDate, LocalDateTime createdAt, LocalDateTime updatedAt, Book book) {
         this.bookDetailId = bookDetailId;
         this.description = description;
         this.imageUrl = imageUrl;
@@ -134,11 +135,11 @@ public class BookDetail {
         this.publisher = publisher;
     }
 
-    public LocalDateTime getPublishDate() {
+    public LocalDate getPublishDate() {
         return publishDate;
     }
 
-    public void setPublishDate(LocalDateTime publishDate) {
+    public void setPublishDate(LocalDate publishDate) {
         this.publishDate = publishDate;
     }
 

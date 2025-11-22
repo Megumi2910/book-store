@@ -53,6 +53,17 @@ public class AdminGenreController {
             List<GenreDto> genres = genreService.getAllGenres();
             model.addAttribute("genres", genres);
             
+            // Calculate stats for display
+            if (genres != null && !genres.isEmpty()) {
+                long totalBooks = genres.stream()
+                    .mapToLong(g -> g.getBookCount() != null ? g.getBookCount() : 0L)
+                    .sum();
+                double avgBooksPerGenre = (double) totalBooks / genres.size();
+                
+                model.addAttribute("totalBooks", totalBooks);
+                model.addAttribute("avgBooksPerGenre", avgBooksPerGenre);
+            }
+            
             // Add empty DTO for inline add form (optional)
             model.addAttribute("genreDto", new GenreDto());
 
