@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+    <!-- Admin Sidebar Fragment -->
+    <div th:fragment="sidebar" class="admin-sidebar">
+        <!-- Sidebar Header -->
+        <div class="sidebar-header">
+            <h4>
+                <i class="bi bi-book-fill me-2"></i>
+                Book Store Admin
+            </h4>
+        </div>
+        
+        <!-- Sidebar Navigation -->
+        <nav class="nav flex-column mt-3">
+            <!-- Dashboard -->
+            <a class="nav-link" th:href="@{/admin/dashboard}">
+                <i class="bi bi-speedometer2"></i>
+                Dashboard
+            </a>
+            
+            <!-- Divider -->
+            <hr class="my-2" style="border-color: rgba(255,255,255,0.1);">
+            
+            <!-- Books Section -->
+            <div class="px-3 py-2">
+                <small class="text-white-50 text-uppercase fw-bold">Catalog</small>
+            </div>
+            
+            <a class="nav-link" th:href="@{/admin/books}">
+                <i class="bi bi-book"></i>
+                Books
+            </a>
+            
+            <a class="nav-link" th:href="@{/admin/books/new}">
+                <i class="bi bi-plus-circle"></i>
+                Add New Book
+            </a>
+            
+            <a class="nav-link" th:href="@{/admin/genres}">
+                <i class="bi bi-tags"></i>
+                Genres
+            </a>
+            
+            <!-- Divider -->
+            <hr class="my-2" style="border-color: rgba(255,255,255,0.1);">
+            
+            <!-- Orders Section -->
+            <div class="px-3 py-2">
+                <small class="text-white-50 text-uppercase fw-bold">Sales</small>
+            </div>
+            
+            <a class="nav-link" href="#" onclick="alert('Coming soon!'); return false;">
+                <i class="bi bi-cart"></i>
+                Orders
+                <span class="badge bg-warning text-dark ms-auto">Soon</span>
+            </a>
+            
+            <a class="nav-link" href="#" onclick="alert('Coming soon!'); return false;">
+                <i class="bi bi-credit-card"></i>
+                Payments
+                <span class="badge bg-warning text-dark ms-auto">Soon</span>
+            </a>
+            
+            <!-- Divider -->
+            <hr class="my-2" style="border-color: rgba(255,255,255,0.1);">
+            
+            <!-- Users Section -->
+            <div class="px-3 py-2">
+                <small class="text-white-50 text-uppercase fw-bold">Management</small>
+            </div>
+            
+            <a class="nav-link" href="#" onclick="alert('Coming soon!'); return false;">
+                <i class="bi bi-people"></i>
+                Users
+                <span class="badge bg-warning text-dark ms-auto">Soon</span>
+            </a>
+            
+            <a class="nav-link" href="#" onclick="alert('Coming soon!'); return false;">
+                <i class="bi bi-star"></i>
+                Reviews
+                <span class="badge bg-warning text-dark ms-auto">Soon</span>
+            </a>
+            
+            <!-- Divider -->
+            <hr class="my-2" style="border-color: rgba(255,255,255,0.1);">
+            
+            <!-- Reports Section -->
+            <div class="px-3 py-2">
+                <small class="text-white-50 text-uppercase fw-bold">Analytics</small>
+            </div>
+            
+            <a class="nav-link" href="#" onclick="alert('Coming soon!'); return false;">
+                <i class="bi bi-graph-up"></i>
+                Reports
+                <span class="badge bg-warning text-dark ms-auto">Soon</span>
+            </a>
+            
+            <!-- Divider -->
+            <hr class="my-2" style="border-color: rgba(255,255,255,0.1);">
+            
+            <!-- Back to Site -->
+            <a class="nav-link" th:href="@{/}">
+                <i class="bi bi-house"></i>
+                Back to Site
+            </a>
+            
+            <!-- Spacer -->
+            <div style="height: 100px;"></div>
+        </nav>
+    </div>
+</body>
+</html>
+

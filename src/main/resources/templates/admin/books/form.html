@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout/base}">
+<head>
+    <title th:text="${isEdit ? 'Edit Book' : 'Add New Book'}">Book Form</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <!-- Page Header -->
+        <div class="mb-4">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/admin/dashboard}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/admin/books}">Books</a></li>
+                    <li class="breadcrumb-item active" th:text="${isEdit ? 'Edit Book' : 'Add New Book'}">Form</li>
+                </ol>
+            </nav>
+            <h2 class="mb-1" th:text="${isEdit ? '✏️ Edit Book' : '➕ Add New Book'}">Book Form</h2>
+            <p class="text-muted mb-0">Fill in the book details below</p>
+        </div>
+
+        <!-- Form Card -->
+        <div class="card">
+            <div class="card-body">
+                <form th:action="${isEdit ? '/admin/books/' + bookDto.bookId + '/edit' : '/admin/books/new'}" 
+                      method="post" 
+                      th:object="${bookDto}"
+                      enctype="multipart/form-data">
+                    
+                    <!-- CSRF Token -->
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    
+                    <!-- Hidden version field for optimistic locking -->
+                    <input type="hidden" th:field="*{version}" th:if="${isEdit}"/>
+
+                    <div class="row">
+                        <!-- Left Column -->
+                        <div class="col-md-8">
+                            <!-- Basic Information Section -->
+                            <h5 class="border-bottom pb-2 mb-3">📖 Basic Information</h5>
+                            
+                            <!-- Title -->
+                            <div class="mb-3">
+                                <label for="title" class="form-label">
+                                    Title <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="title" 
+                                       th:field="*{title}" 
+                                       th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'"
+                                       placeholder="Enter book title">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('title')}" 
+                                     th:errors="*{title}">Error</div>
+                            </div>
+
+                            <!-- Author -->
+                            <div class="mb-3">
+                                <label for="author" class="form-label">
+                                    Author <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="author" 
+                                       th:field="*{author}" 
+                                       th:classappend="${#fields.hasErrors('author')} ? 'is-invalid'"
+                                       placeholder="Enter author name">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('author')}" 
+                                     th:errors="*{author}">Error</div>
+                            </div>
+
+                            <!-- ISBN -->
+                            <div class="mb-3">
+                                <label for="isbn" class="form-label">
+                                    ISBN <small class="text-muted">(optional, 13 digits)</small>
+                                </label>
+                                <input type="text" class="form-control" id="isbn" 
+                                       th:field="*{isbn}" 
+                                       th:classappend="${#fields.hasErrors('isbn')} ? 'is-invalid'"
+                                       placeholder="9781234567890" maxlength="13">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('isbn')}" 
+                                     th:errors="*{isbn}">Error</div>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="mb-3">
+                                <label for="description" class="form-label">
+                                    Description <small class="text-muted">(optional)</small>
+                                </label>
+                                <textarea class="form-control" id="description" 
+                                          th:field="*{description}" 
+                                          rows="5"
+                                          placeholder="Enter book description..."></textarea>
+                                <small class="text-muted">Max 5000 characters</small>
+                            </div>
+
+                            <!-- Publisher & Publish Date -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="publisher" class="form-label">
+                                        Publisher <small class="text-muted">(optional)</small>
+                                    </label>
+                                    <input type="text" class="form-control" id="publisher" 
+                                           th:field="*{publisher}" 
+                                           placeholder="Enter publisher name">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="publishDate" class="form-label">
+                                        Publish Date <small class="text-muted">(optional)</small>
+                                    </label>
+                                    <input type="date" class="form-control" id="publishDate" 
+                                           th:field="*{publishDate}">
+                                </div>
+                            </div>
+
+                            <!-- Price & Quantity -->
+                            <h5 class="border-bottom pb-2 mb-3 mt-4">💰 Pricing & Stock</h5>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="price" class="form-label">
+                                        Price ($) <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="number" class="form-control" id="price" 
+                                           th:field="*{price}" 
+                                           th:classappend="${#fields.hasErrors('price')} ? 'is-invalid'"
+                                           step="0.01" min="0" placeholder="0.00">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('price')}" 
+                                         th:errors="*{price}">Error</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="quantity" class="form-label">
+                                        Stock Quantity <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="number" class="form-control" id="quantity" 
+                                           th:field="*{quantity}" 
+                                           th:classappend="${#fields.hasErrors('quantity')} ? 'is-invalid'"
+                                           min="0" placeholder="0">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('quantity')}" 
+                                         th:errors="*{quantity}">Error</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column -->
+                        <div class="col-md-4">
+                            <!-- Genres Section -->
+                            <h5 class="border-bottom pb-2 mb-3">🏷️ Genres</h5>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    Select Genres <span class="text-danger">*</span>
+                                </label>
+                                <div class="border rounded p-3" style="max-height: 250px; overflow-y: auto;">
+                                    <div class="form-check" th:each="genre : ${genres}">
+                                        <input class="form-check-input" type="checkbox" 
+                                               th:field="*{genreIds}" 
+                                               th:value="${genre.id}"
+                                               th:id="${'genre_' + genre.id}">
+                                        <label class="form-check-label" th:for="${'genre_' + genre.id}"
+                                               th:text="${genre.name}">Genre</label>
+                                    </div>
+                                </div>
+                                <div class="text-danger small mt-1" th:if="${#fields.hasErrors('genreIds')}" 
+                                     th:errors="*{genreIds}">Error</div>
+                                <small class="text-muted">Select at least one genre</small>
+                            </div>
+
+                            <!-- Image Section -->
+                            <h5 class="border-bottom pb-2 mb-3 mt-4">🖼️ Cover Image</h5>
+                            
+                            <!-- Current Image Preview -->
+                            <div class="mb-3" th:if="${isEdit and bookDto.imageUrl != null}">
+                                <label class="form-label">Current Image:</label>
+                                <div class="text-center">
+                                    <img th:src="${bookDto.imageUrl}" 
+                                         alt="Current book cover" 
+                                         class="img-thumbnail mb-2"
+                                         style="max-width: 100%; max-height: 200px;">
+                                </div>
+                            </div>
+
+                            <!-- Image Upload -->
+                            <div class="mb-3">
+                                <label for="imageFile" class="form-label">
+                                    Upload New Image <small class="text-muted">(optional)</small>
+                                </label>
+                                <input type="file" class="form-control" id="imageFile" 
+                                       name="imageFile" accept="image/*"
+                                       onchange="previewImage(this)">
+                                <small class="text-muted d-block mt-1">
+                                    Max 2MB. Formats: JPG, PNG, WEBP
+                                </small>
+                            </div>
+
+                            <!-- Image Preview -->
+                            <div id="imagePreview" class="mb-3" style="display: none;">
+                                <label class="form-label">Preview:</label>
+                                <div class="text-center">
+                                    <img id="previewImg" src="#" alt="Preview" 
+                                         class="img-thumbnail"
+                                         style="max-width: 100%; max-height: 200px;">
+                                </div>
+                            </div>
+
+                            <!-- Image URL (Alternative) -->
+                            <div class="mb-3">
+                                <label for="imageUrl" class="form-label">
+                                    Or Enter Image URL:
+                                </label>
+                                <input type="url" class="form-control" id="imageUrl" 
+                                       th:field="*{imageUrl}" 
+                                       placeholder="https://example.com/image.jpg">
+                                <small class="text-muted">Leave empty for default placeholder</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <hr class="my-4">
+                    <div class="d-flex justify-content-between">
+                        <a th:href="@{/admin/books}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-1"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-1"></i>
+                            <span th:text="${isEdit ? 'Update Book' : 'Create Book'}">Save</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for Image Preview -->
+    <th:block layout:fragment="extra-js">
+        <script>
+            function previewImage(input) {
+                const preview = document.getElementById('imagePreview');
+                const previewImg = document.getElementById('previewImg');
+                
+                if (input.files && input.files[0]) {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        previewImg.src = e.target.result;
+                        preview.style.display = 'block';
+                    };
+                    
+                    reader.readAsDataURL(input.files[0]);
+                } else {
+                    preview.style.display = 'none';
+                }
+            }
+        </script>
+    </th:block>
+</body>
+</html>
+

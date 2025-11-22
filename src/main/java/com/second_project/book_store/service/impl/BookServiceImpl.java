@@ -1,0 +1,273 @@
+package com.second_project.book_store.service.impl;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.second_project.book_store.entity.Book;
+import com.second_project.book_store.entity.BookDetail;
+import com.second_project.book_store.entity.Genre;
+import com.second_project.book_store.model.BookDto;
+import com.second_project.book_store.repository.BookRepository;
+import com.second_project.book_store.repository.GenreRepository;
+import com.second_project.book_store.repository.ReviewRepository;
+import com.second_project.book_store.service.BookService;
+
+/**
+ * Implementation of BookService.
+ * 
+ * BEST PRACTICES:
+ * - @Transactional(readOnly=true) by default for performance
+ * - Override with @Transactional for write operations
+ * - Use DTOs to avoid lazy loading issues
+ * - Log important operations
+ */
+@Service
+@Transactional(readOnly = true)
+public class BookServiceImpl implements BookService {
+
+    private static final Logger logger = LoggerFactory.getLogger(BookServiceImpl.class);
+
+    private final BookRepository bookRepository;
+    private final GenreRepository genreRepository;
+    private final ReviewRepository reviewRepository;
+
+    public BookServiceImpl(BookRepository bookRepository, 
+                          GenreRepository genreRepository,
+                          ReviewRepository reviewRepository) {
+        this.bookRepository = bookRepository;
+        this.genreRepository = genreRepository;
+        this.reviewRepository = reviewRepository;
+    }
+
+    @Override
+    @Transactional
+    public BookDto createBook(BookDto bookDto) {
+        logger.info("Creating new book: {}", bookDto.getTitle());
+
+        // Validate ISBN uniqueness
+        if (bookDto.getIsbn() != null && !bookDto.getIsbn().isBlank()) {
+            if (bookRepository.existsByIsbn(bookDto.getIsbn())) {
+                throw new IllegalArgumentException("ISBN already exists: " + bookDto.getIsbn());
+            }
+        }
+
+        // Create Book entity
+        Book book = new Book();
+        book.setTitle(bookDto.getTitle());
+        book.setAuthor(bookDto.getAuthor());
+        book.setIsbn(bookDto.getIsbn());
+
+        // Create BookDetail entity
+        BookDetail bookDetail = new BookDetail();
+        bookDetail.setDescription(bookDto.getDescription());
+        bookDetail.setImageUrl(bookDto.getImageUrl());
+        bookDetail.setPrice(bookDto.getPrice());
+        bookDetail.setQuantity(bookDto.getQuantity());
+        bookDetail.setPublisher(bookDto.getPublisher());
+        bookDetail.setPublishDate(bookDto.getPublishDate());
+
+        // Set bidirectional relationship
+        book.setBookDetail(bookDetail);
+        bookDetail.setBook(book);
+
+        // Set genres
+        if (bookDto.getGenreIds() != null && !bookDto.getGenreIds().isEmpty()) {
+            Set<Genre> genres = new HashSet<>();
+            for (Long genreId : bookDto.getGenreIds()) {
+                Genre genre = genreRepository.findById(genreId)
+                    .orElseThrow(() -> new IllegalArgumentException("Genre not found: " + genreId));
+                genres.add(genre);
+            }
+            book.setGenres(genres);
+        }
+
+        // Save (cascades to BookDetail)
+        Book savedBook = bookRepository.save(book);
+
+        logger.info("Book created successfully with ID: {}", savedBook.getBookId());
+
+        return convertToDto(savedBook);
+    }
+
+    @Override
+    @Transactional
+    public BookDto updateBook(Long bookId, BookDto bookDto) {
+        logger.info("Updating book with ID: {}", bookId);
+
+        Book book = bookRepository.findById(bookId)
+            .orElseThrow(() -> new IllegalArgumentException("Book not found: " + bookId));
+
+        // Validate ISBN uniqueness (exclude current book)
+        if (bookDto.getIsbn() != null && !bookDto.getIsbn().isBlank()) {
+            if (bookRepository.existsByIsbnAndBookIdNot(bookDto.getIsbn(), bookId)) {
+                throw new IllegalArgumentException("ISBN already exists: " + bookDto.getIsbn());
+            }
+        }
+
+        // Update Book fields
+        book.setTitle(bookDto.getTitle());
+        book.setAuthor(bookDto.getAuthor());
+        book.setIsbn(bookDto.getIsbn());
+
+        // Update BookDetail fields
+        BookDetail bookDetail = book.getBookDetail();
+        if (bookDetail == null) {
+            bookDetail = new BookDetail();
+            book.setBookDetail(bookDetail);
+            bookDetail.setBook(book);
+        }
+        bookDetail.setDescription(bookDto.getDescription());
+        bookDetail.setImageUrl(bookDto.getImageUrl());
+        bookDetail.setPrice(bookDto.getPrice());
+        bookDetail.setQuantity(bookDto.getQuantity());
+        bookDetail.setPublisher(bookDto.getPublisher());
+        bookDetail.setPublishDate(bookDto.getPublishDate());
+
+        // Update genres
+        if (bookDto.getGenreIds() != null) {
+            book.getGenres().clear();
+            for (Long genreId : bookDto.getGenreIds()) {
+                Genre genre = genreRepository.findById(genreId)
+                    .orElseThrow(() -> new IllegalArgumentException("Genre not found: " + genreId));
+                book.getGenres().add(genre);
+            }
+        }
+
+        Book updatedBook = bookRepository.save(book);
+
+        logger.info("Book updated successfully: {}", bookId);
+
+        return convertToDto(updatedBook);
+    }
+
+    @Override
+    public BookDto getBookById(Long bookId) {
+        Book book = bookRepository.findById(bookId)
+            .orElseThrow(() -> new IllegalArgumentException("Book not found: " + bookId));
+        return convertToDto(book);
+    }
+
+    @Override
+    public Book getBookEntityById(Long bookId) {
+        return bookRepository.findById(bookId)
+            .orElseThrow(() -> new IllegalArgumentException("Book not found: " + bookId));
+    }
+
+    @Override
+    public Page<BookDto> getAllBooks(Pageable pageable) {
+        Page<Book> books = bookRepository.findAll(pageable);
+        return books.map(this::convertToDto);
+    }
+
+    @Override
+    public Page<BookDto> searchBooks(String keyword, Pageable pageable) {
+        Page<Book> books = bookRepository.searchByKeyword(keyword, pageable);
+        return books.map(this::convertToDto);
+    }
+
+    @Override
+    public Page<BookDto> getBooksByGenre(Long genreId, Pageable pageable) {
+        Page<Book> books = bookRepository.findByGenreId(genreId, pageable);
+        return books.map(this::convertToDto);
+    }
+
+    @Override
+    @Transactional
+    public void deleteBook(Long bookId) {
+        logger.info("Deleting book with ID: {}", bookId);
+
+        if (!bookRepository.existsById(bookId)) {
+            throw new IllegalArgumentException("Book not found: " + bookId);
+        }
+
+        // BEST PRACTICE: Consider soft delete in production
+        // For now, we do hard delete (cascades to BookDetail)
+        bookRepository.deleteById(bookId);
+
+        logger.info("Book deleted successfully: {}", bookId);
+    }
+
+    @Override
+    public List<BookDto> getLowStockBooks(Integer threshold) {
+        List<Book> books = bookRepository.findLowStockBooks(threshold);
+        return books.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void updateBookStock(Long bookId, Integer quantity) {
+        logger.info("Updating stock for book ID {}: new quantity = {}", bookId, quantity);
+
+        Book book = bookRepository.findById(bookId)
+            .orElseThrow(() -> new IllegalArgumentException("Book not found: " + bookId));
+
+        if (book.getBookDetail() != null) {
+            book.getBookDetail().setQuantity(quantity);
+            bookRepository.save(book);
+        }
+    }
+
+    @Override
+    public boolean isbnExists(String isbn) {
+        return bookRepository.existsByIsbn(isbn);
+    }
+
+    @Override
+    public boolean isbnExistsForDifferentBook(String isbn, Long bookId) {
+        return bookRepository.existsByIsbnAndBookIdNot(isbn, bookId);
+    }
+
+    /**
+     * Convert Book entity to BookDto.
+     * 
+     * BEST PRACTICE: Use mapper libraries like MapStruct in production
+     * for complex mappings.
+     */
+    private BookDto convertToDto(Book book) {
+        BookDto dto = new BookDto();
+        dto.setBookId(book.getBookId());
+        dto.setTitle(book.getTitle());
+        dto.setAuthor(book.getAuthor());
+        dto.setIsbn(book.getIsbn());
+        dto.setCreatedAt(book.getCreatedAt());
+        dto.setUpdatedAt(book.getUpdatedAt());
+        dto.setVersion(book.getVersion());
+
+        // Set BookDetail fields
+        if (book.getBookDetail() != null) {
+            BookDetail detail = book.getBookDetail();
+            dto.setDescription(detail.getDescription());
+            dto.setImageUrl(detail.getImageUrl());
+            dto.setPrice(detail.getPrice());
+            dto.setQuantity(detail.getQuantity());
+            dto.setPublisher(detail.getPublisher());
+            dto.setPublishDate(detail.getPublishDate());
+        }
+
+        // Set genre IDs
+        if (book.getGenres() != null && !book.getGenres().isEmpty()) {
+            Set<Long> genreIds = book.getGenres().stream()
+                .map(Genre::getId)
+                .collect(Collectors.toSet());
+            dto.setGenreIds(genreIds);
+        }
+
+        // Set review statistics
+        dto.setAverageRating(reviewRepository.getAverageRatingForBook(book.getBookId()));
+        dto.setReviewCount(reviewRepository.countByBook_BookId(book.getBookId()));
+
+        return dto;
+    }
+}
+

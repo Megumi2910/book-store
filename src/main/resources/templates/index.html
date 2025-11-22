@@ -81,7 +81,14 @@
                 <div class="alert alert-success" role="alert" sec:authorize="isAuthenticated()">
                     <h4 class="alert-heading">Welcome back!</h4>
                     <p>You are logged in as <strong th:text="${userEmail}">user@example.com</strong></p>
-                    <p class="mb-0">Role: <span class="badge bg-primary" th:text="${userRole}">USER</span></p>
+                    <p class="mb-0">
+                        Role: <span class="badge bg-primary" th:text="${userRole}">USER</span>
+                        <span sec:authorize="hasRole('ADMIN')" class="ms-3">
+                            <a th:href="@{/admin/dashboard}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-speedometer2 me-1"></i> Go to Admin Dashboard
+                            </a>
+                        </span>
+                    </p>
                 </div>
                 
                 <div class="alert alert-info" role="alert" sec:authorize="!isAuthenticated()">

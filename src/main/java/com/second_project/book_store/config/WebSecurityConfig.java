@@ -21,6 +21,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.second_project.book_store.config.properties.CorsProperties;
+import com.second_project.book_store.security.CustomAuthenticationSuccessHandler;
 import com.second_project.book_store.security.CustomUserDetailsService;
 
 @Configuration
@@ -29,6 +30,7 @@ public class WebSecurityConfig {
 
     private final CorsProperties corsProperties;
     private final CustomUserDetailsService userDetailsService;
+    private final CustomAuthenticationSuccessHandler authenticationSuccessHandler;
 
     /**
      * Constructor injection for dependencies.
@@ -38,17 +40,24 @@ public class WebSecurityConfig {
      * 
      * @param corsProperties CORS configuration properties
      * @param userDetailsService Custom UserDetailsService implementation
+     * @param authenticationSuccessHandler Custom success handler for role-based redirection
      * @throws IllegalArgumentException if any parameter is null
      */
-    public WebSecurityConfig(CorsProperties corsProperties, CustomUserDetailsService userDetailsService) {
+    public WebSecurityConfig(CorsProperties corsProperties, 
+                            CustomUserDetailsService userDetailsService,
+                            CustomAuthenticationSuccessHandler authenticationSuccessHandler) {
         if (corsProperties == null) {
             throw new IllegalArgumentException("CorsProperties cannot be null");
         }
         if (userDetailsService == null) {
             throw new IllegalArgumentException("CustomUserDetailsService cannot be null");
         }
+        if (authenticationSuccessHandler == null) {
+            throw new IllegalArgumentException("CustomAuthenticationSuccessHandler cannot be null");
+        }
         this.corsProperties = corsProperties;
         this.userDetailsService = userDetailsService;
+        this.authenticationSuccessHandler = authenticationSuccessHandler;
     }
 
     private static final String[] PUBLIC_ENDPOINTS = {
@@ -71,6 +80,10 @@ public class WebSecurityConfig {
         "/api/v1/users/resend-verify-token",
         "/api/v1/users/forgot-password",
         "/api/v1/users/reset-password"  // API endpoint - POST only
+    };
+
+    private static final String[] ADMIN_ENDPOINTS = {
+        "/admin/**"
     };
 
     private static final String[] CSRF_IGNORED_ENDPOINTS = {
@@ -231,6 +244,7 @@ public class WebSecurityConfig {
             // Authorization rules
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                .requestMatchers(ADMIN_ENDPOINTS).hasRole("ADMIN")  // Admin pages require ADMIN role
                 .anyRequest().authenticated()
             )
             
@@ -240,7 +254,7 @@ public class WebSecurityConfig {
             .formLogin(form -> form
                 .loginPage("/login")  // Custom login page
                 .loginProcessingUrl("/login")  // POST endpoint (Spring Security handles automatically)
-                .defaultSuccessUrl("/", true)  // Redirect to home after successful login
+                .successHandler(authenticationSuccessHandler)  // Custom handler for role-based redirection
                 .failureUrl("/login?error=true")  // Redirect back to login on failure
                 .usernameParameter("username")  // Form field name (we use email as username)
                 .passwordParameter("password")  // Form field name

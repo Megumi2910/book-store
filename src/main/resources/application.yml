@@ -40,8 +40,14 @@ spring:
     hibernate:
       ddl-auto: update
     properties:
-      hibernate.format_sql: true
-      hibernate.jdbc.time_zone: GMT+7
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: GMT+7
+          batch_size: 20  # Batch INSERT/UPDATE operations
+        default_batch_fetch_size: 10  # Batch SELECT for lazy collections (prevents N+1)
+        order_inserts: true  # Order SQL for better batching
+        order_updates: true
     show-sql: true
     open-in-view: false  # Best practice: Disable to prevent lazy loading issues
   jackson:
@@ -105,8 +111,14 @@ spring:
     hibernate:
       ddl-auto: validate
     properties:
-      hibernate.format_sql: true
-      hibernate.jdbc.time_zone: GMT+7
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: GMT+7
+          batch_size: 20
+        default_batch_fetch_size: 10
+        order_inserts: true
+        order_updates: true
     show-sql: false
     open-in-view: false
   jackson:
@@ -148,8 +160,14 @@ spring:
     hibernate:
       ddl-auto: validate
     properties:
-      hibernate.format_sql: false
-      hibernate.jdbc.time_zone: GMT+7
+      hibernate:
+        format_sql: false
+        jdbc:
+          time_zone: GMT+7
+          batch_size: 20
+        default_batch_fetch_size: 10
+        order_inserts: true
+        order_updates: true
     show-sql: false
     open-in-view: false
   jackson:

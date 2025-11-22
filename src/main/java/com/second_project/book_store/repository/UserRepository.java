@@ -35,4 +35,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return Optional containing User if found
      */
     Optional<User> findByRole(User.UserRole role);
+
+    /**
+     * Count users by enabled status.
+     * Used for dashboard statistics to count verified users.
+     * 
+     * @param isEnabled Enabled status (true for verified/enabled users)
+     * @return Count of users with given status
+     */
+    Long countByIsEnabled(boolean isEnabled);
 }
