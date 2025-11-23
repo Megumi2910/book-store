@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import com.second_project.book_store.entity.User;
@@ -171,7 +172,7 @@ public class CustomUserDetails implements UserDetails {
         // Convert UserRole to Spring Security authority
         // Format: "ROLE_ADMIN" or "ROLE_USER"
         String authority = "ROLE_" + role.name();
-        return Collections.singletonList(() -> authority);
+        return Collections.singletonList(new SimpleGrantedAuthority(authority));
     }
 
     /**

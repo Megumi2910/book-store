@@ -86,15 +86,19 @@ public class WebSecurityConfig {
         "/admin/**"
     };
 
+    /**
+     * Endpoints to ignore CSRF protection.
+     * 
+     * ONLY include:
+     * - REST APIs (stateless, use tokens instead of cookies)
+     * - External webhooks (can't provide CSRF tokens)
+     * 
+     * DO NOT include:
+     * - Web form endpoints (need CSRF protection!)
+     * - Any POST/PUT/DELETE that changes state
+     */
     private static final String[] CSRF_IGNORED_ENDPOINTS = {
-        "/api/**",  // REST APIs don't need CSRF (stateless)
-        "/register",
-        "/verify-registration",
-        "/send-verify-email",
-        "/resend-verify-token",
-        "/reset-password",  // ✅ Thymeleaf form - CSRF handled by Thymeleaf automatically
-        "/save-password",
-        "/forgot-password"
+        "/api/**"  // REST APIs only - stateless, no session, no CSRF needed
     };
 
     /**
