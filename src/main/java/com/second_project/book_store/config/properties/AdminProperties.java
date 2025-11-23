@@ -48,6 +48,8 @@ public class AdminProperties {
      */
     private String email;
 
+    private String phoneNumber;
+
     // Getters and Setters
     public String getDefaultPassword() {
         return defaultPassword;
@@ -80,5 +82,15 @@ public class AdminProperties {
     public void setEmail(String email) {
         this.email = email;
     }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    
 }
 

@@ -58,6 +58,7 @@ public class DataSeeder {
                     admin.setEmail(adminProperties.getEmail());
                     admin.setPassword(passwordEncoder.encode(adminProperties.getDefaultPassword()));
                     admin.setRole(UserRole.ADMIN);
+                    admin.setPhoneNumber(adminProperties.getPhoneNumber());
                     admin.setEnabled(true);
                     
                     userRepository.save(admin);

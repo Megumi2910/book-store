@@ -59,6 +59,7 @@ admin:
   first-name: ${ADMIN_FIRST_NAME:Admin}
   last-name: ${ADMIN_LAST_NAME:User}
   email: ${ADMIN_EMAIL}
+  phone-number: ${ADMIN_PHONE_NUMBER}
 
 # Application configuration
 app:
