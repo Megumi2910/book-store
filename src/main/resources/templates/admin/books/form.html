@@ -209,9 +209,12 @@
                                 <label for="imageUrl" class="form-label">
                                     Or Enter Image URL:
                                 </label>
-                                <input type="url" class="form-control" id="imageUrl" 
+                                <input type="text" class="form-control" id="imageUrl" 
                                        th:field="*{imageUrl}" 
-                                       placeholder="https://example.com/image.jpg">
+                                       th:classappend="${#fields.hasErrors('imageUrl')} ? 'is-invalid'"
+                                       placeholder="/images/image.jpg or https://example.com/image.jpg">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('imageUrl')}" 
+                                     th:errors="*{imageUrl}">Error</div>
                                 <small class="text-muted">Leave empty for default placeholder</small>
                             </div>
                         </div>

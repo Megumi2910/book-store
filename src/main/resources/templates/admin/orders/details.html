@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout/base}">
+<head>
+    <title th:text="'Order #' + ${order.orderId} + ' - Admin'">Order Details</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <!-- Page Header -->
+        <div class="mb-4">
+            <a th:href="@{/admin/orders}" class="btn btn-outline-secondary mb-2">
+                <i class="bi bi-arrow-left me-1"></i> Back to Orders
+            </a>
+            <h2 class="mb-1">Order Details #<span th:text="${order.orderId}">0</span></h2>
+        </div>
+
+        <!-- Success/Error Messages -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div class="row">
+            <!-- Order Items -->
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Order Items</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Book</th>
+                                        <th>Quantity</th>
+                                        <th>Price</th>
+                                        <th>Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="item : ${order.orderItems}">
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <img th:src="${item.bookImageUrl}" 
+                                                     class="img-thumbnail me-2" 
+                                                     style="width: 50px; height: 60px; object-fit: cover;"
+                                                     th:alt="${item.bookTitle}">
+                                                <div>
+                                                    <strong th:text="${item.bookTitle}">Book</strong>
+                                                    <br>
+                                                    <small class="text-muted" th:text="${item.bookAuthor}">Author</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td th:text="${item.quantity}">1</td>
+                                        <td th:text="${#numbers.formatInteger(item.priceAtPurchase.longValue(), 1, 'COMMA')} + ' VND'">0 VND</td>
+                                        <td th:text="${#numbers.formatInteger(item.subtotal.longValue(), 1, 'COMMA')} + ' VND'">0 VND</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Info -->
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Order Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <strong>Order ID:</strong> #<span th:text="${order.orderId}">0</span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Customer:</strong>
+                            <br>
+                            <span th:text="${order.userEmail}">user@example.com</span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Order Date:</strong>
+                            <br>
+                            <small th:text="${#temporals.format(order.orderDate, 'MMM dd, yyyy HH:mm')}">Date</small>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Shipping Address:</strong>
+                            <p class="mb-0" th:text="${order.shippingAddress}">Address</p>
+                        </div>
+                        <hr>
+                        <div class="mb-3">
+                            <strong>Total Amount:</strong>
+                            <h4 class="text-primary mb-0" th:text="${#numbers.formatInteger(order.totalAmount.longValue(), 1, 'COMMA')} + ' VND'">0 VND</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Update -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Update Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <strong>Current Status:</strong>
+                            <span class="badge ms-2" 
+                                  th:classappend="${order.orderStatus.name() == 'PENDING'} ? 'bg-warning' : 
+                                                  (${order.orderStatus.name() == 'SHIPPED'} ? 'bg-info' : 
+                                                  (${order.orderStatus.name() == 'DELIVERED'} ? 'bg-success' : 'bg-secondary'))"
+                                  th:text="${order.orderStatus}">PENDING</span>
+                        </div>
+                        <form th:action="@{/admin/orders/{id}/status(id=${order.orderId})}" method="post">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <div class="mb-3">
+                                <select class="form-select" name="status" required>
+                                    <option th:each="status : ${statuses}" 
+                                            th:value="${status.name()}" 
+                                            th:text="${status}"
+                                            th:selected="${order.orderStatus == status}">
+                                        Status
+                                    </option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Update Status</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Payment Info -->
+                <div class="card" th:if="${order.paymentId != null}">
+                    <div class="card-header">
+                        <h5 class="mb-0">Payment Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <strong>Method:</strong> <span th:text="${order.paymentMethod}">COD</span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Status:</strong>
+                            <span class="badge ms-2" 
+                                  th:classappend="${order.paymentStatus.name() == 'PAID'} ? 'bg-success' : 
+                                                  (${order.paymentStatus.name() == 'PENDING'} ? 'bg-warning' : 'bg-danger')"
+                                  th:text="${order.paymentStatus}">PENDING</span>
+                        </div>
+                        <div class="mb-2" th:if="${order.transactionCode != null}">
+                            <strong>Transaction Code:</strong>
+                            <br>
+                            <code th:text="${order.transactionCode}">TXN-XXXX</code>
+                        </div>
+                        <div th:if="${order.paidAt != null}">
+                            <strong>Paid At:</strong>
+                            <br>
+                            <small th:text="${#temporals.format(order.paidAt, 'MMM dd, yyyy HH:mm')}">Date</small>
+                        </div>
+                        <div th:if="${order.paymentMethod.name() == 'COD' and order.paymentStatus.name() == 'PENDING' and order.orderStatus.name() == 'DELIVERED'}">
+                            <form th:action="@{/admin/payments/{id}/mark-paid(id=${order.orderId})}" method="post" class="mt-3">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="bi bi-check-circle me-2"></i>Mark Payment as Paid
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

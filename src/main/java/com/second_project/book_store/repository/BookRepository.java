@@ -123,5 +123,27 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     @Query("SELECT CASE WHEN COUNT(b) > 0 THEN true ELSE false END FROM Book b " +
            "WHERE b.isbn = :isbn AND b.bookId != :bookId")
     boolean existsByIsbnAndBookIdNot(@Param("isbn") String isbn, @Param("bookId") Long bookId);
+
+    /**
+     * Find recently added books (sorted by creation date, newest first).
+     * 
+     * @param pageable Pagination parameters (use PageRequest.of(0, limit) for top N)
+     * @return Page of recently added books
+     */
+    @Query("SELECT b FROM Book b ORDER BY b.createdAt DESC")
+    Page<Book> findRecentlyAddedBooks(Pageable pageable);
+
+    /**
+     * Find popular books based on total quantity ordered.
+     * Books are ranked by sum of quantities from OrderItem.
+     * 
+     * @param pageable Pagination parameters
+     * @return Page of popular books
+     */
+    @Query("SELECT b FROM Book b " +
+           "LEFT JOIN OrderItem oi ON oi.book.bookId = b.bookId " +
+           "GROUP BY b.bookId " +
+           "ORDER BY COALESCE(SUM(oi.quantity), 0) DESC, b.createdAt DESC")
+    Page<Book> findPopularBooks(Pageable pageable);
 }
 

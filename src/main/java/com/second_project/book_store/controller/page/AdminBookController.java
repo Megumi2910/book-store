@@ -146,10 +146,11 @@ public class AdminBookController {
             if (imageFile != null && !imageFile.isEmpty()) {
                 String imageUrl = imageUploadService.uploadImage(imageFile, "books");
                 bookDto.setImageUrl(imageUrl);
-            } else if (bookDto.getImageUrl() == null || bookDto.getImageUrl().isEmpty()) {
-                // Use placeholder if no image provided
+            } else if (bookDto.getImageUrl() == null || bookDto.getImageUrl().trim().isEmpty()) {
+                // Use placeholder if no image provided (neither file nor manual URL)
                 bookDto.setImageUrl(imageUploadService.getDefaultPlaceholderUrl());
             }
+            // If user manually entered a URL and no file uploaded, keep the manual URL
 
             BookDto savedBook = bookService.createBook(bookDto);
             
@@ -227,8 +228,11 @@ public class AdminBookController {
                 String imageUrl = imageUploadService.uploadImage(imageFile, "books");
                 bookDto.setImageUrl(imageUrl);
             } else {
-                // Keep existing image URL if no new file uploaded
-                bookDto.setImageUrl(existingBook.getImageUrl());
+                // If user manually entered a URL, use it; otherwise keep existing URL
+                if (bookDto.getImageUrl() == null || bookDto.getImageUrl().trim().isEmpty()) {
+                    bookDto.setImageUrl(existingBook.getImageUrl());
+                }
+                // If bookDto.getImageUrl() has a value, it means user manually entered it, so keep it
             }
 
             BookDto updatedBook = bookService.updateBook(id, bookDto);

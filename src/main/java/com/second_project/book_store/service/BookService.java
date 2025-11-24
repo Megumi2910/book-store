@@ -112,5 +112,29 @@ public interface BookService {
      * @return true if exists for different book
      */
     boolean isbnExistsForDifferentBook(String isbn, Long bookId);
+
+    /**
+     * Get recently added books.
+     * 
+     * @param limit Maximum number of books to return
+     * @return List of recently added books
+     */
+    List<BookDto> getRecentlyAddedBooks(int limit);
+
+    /**
+     * Get popular books (based on order count).
+     * 
+     * @param limit Maximum number of books to return
+     * @return List of popular books
+     */
+    List<BookDto> getPopularBooks(int limit);
+
+    /**
+     * Get popular books with pagination.
+     * 
+     * @param pageable Pagination parameters
+     * @return Page of popular books
+     */
+    Page<BookDto> getPopularBooks(Pageable pageable);
 }
 

@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart - Book Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" th:href="@{/}">📚 Book Store</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/books}">Browse Books</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" th:href="@{/cart}">🛒 Cart</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/orders}">My Orders</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <span sec:authentication="principal.email">user@example.com</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" th:href="@{/change-password}">Change Password</a></li>
+                            <li sec:authorize="hasRole('ADMIN')"><a class="dropdown-item" th:href="@{/admin/dashboard}">Admin Dashboard</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form th:action="@{/logout}" method="post" style="display: inline;">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    <button type="submit" class="dropdown-item">Logout</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <h1 class="mb-4">🛒 Shopping Cart</h1>
+
+        <!-- Success/Error Messages -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Cart Items -->
+        <div th:if="${cart != null and cart.cartItems != null and !cart.cartItems.empty}">
+            <!-- CSRF Token for JavaScript -->
+            <input type="hidden" id="csrfToken" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div class="d-flex align-items-center">
+                                    <input type="checkbox" 
+                                           class="form-check-input me-2" 
+                                           id="selectAll"
+                                           style="width: 20px; height: 20px; cursor: pointer;"
+                                           onchange="selectAll()">
+                                    <h5 class="card-title mb-0">Cart Items</h5>
+                                </div>
+                                <div>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeSelected()" id="removeSelectedBtn" disabled>
+                                        <i class="bi bi-trash me-1"></i>Remove Selected
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div th:each="item : ${cart.cartItems}">
+                                <div class="d-flex mb-4 pb-4 border-bottom" th:unless="${item == cart.cartItems.last}">
+                                    <div class="flex-shrink-0 me-3">
+                                        <input type="checkbox" 
+                                               class="form-check-input cart-item-checkbox" 
+                                               th:id="'checkbox-' + ${item.cartItemId}"
+                                               th:value="${item.cartItemId}"
+                                               th:attr="data-price=${item.bookPrice}, data-quantity=${item.quantity}, data-subtotal=${item.subtotal}"
+                                               style="width: 20px; height: 20px; cursor: pointer;"
+                                               onchange="updateTotals()">
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <img th:src="${item.bookImageUrl}" 
+                                             class="img-thumbnail" 
+                                             style="width: 100px; height: 120px; object-fit: cover;"
+                                             th:alt="${item.bookTitle}">
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 th:text="${item.bookTitle}">Book Title</h6>
+                                        <p class="text-muted mb-2" th:text="${item.bookAuthor}">Author</p>
+                                        <p class="text-primary mb-2" th:text="${#numbers.formatInteger(item.bookPrice.longValue(), 1, 'COMMA')} + ' VND'">0 VND</p>
+                                        
+                                        <!-- Quantity Selector -->
+                                        <div class="input-group" style="width: 150px;">
+                                            <button class="btn btn-outline-secondary" type="button" 
+                                                    th:onmousedown="'startCartAutoChange(' + ${item.cartItemId} + ', -1)'"
+                                                    onmouseup="stopCartAutoChange()"
+                                                    onmouseleave="stopCartAutoChange()"
+                                                    th:onclick="'changeCartQuantity(' + ${item.cartItemId} + ', -1)'"
+                                                    th:disabled="${item.quantity <= 1}">
+                                                <i class="bi bi-dash"></i>
+                                            </button>
+                                            <input type="number" 
+                                                   class="form-control text-center" 
+                                                   th:id="'quantity-' + ${item.cartItemId}"
+                                                   th:value="${item.quantity}" 
+                                                   min="1"
+                                                   th:max="${item.availableStock}"
+                                                   th:attr="data-max=${item.availableStock}, data-item-id=${item.cartItemId}"
+                                                   onchange="validateCartQuantity(this)"
+                                                   oninput="updateCartQuantityButtons(this)">
+                                            <button class="btn btn-outline-secondary" type="button" 
+                                                    th:onmousedown="'startCartAutoChange(' + ${item.cartItemId} + ', 1)'"
+                                                    onmouseup="stopCartAutoChange()"
+                                                    onmouseleave="stopCartAutoChange()"
+                                                    th:onclick="'changeCartQuantity(' + ${item.cartItemId} + ', 1)'"
+                                                    th:disabled="${item.quantity >= item.availableStock}">
+                                                <i class="bi bi-plus"></i>
+                                            </button>
+                                        </div>
+
+                                        <small class="text-muted d-block mt-2">
+                                            Stock: <span th:text="${item.availableStock}">0</span> available
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        <p class="h6 mb-2" th:id="'subtotal-' + ${item.cartItemId}" th:text="${#numbers.formatInteger(item.subtotal.longValue(), 1, 'COMMA')} + ' VND'">0 VND</p>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                th:onclick="'removeCartItem(' + ${item.cartItemId} + ')'">
+                                            <i class="bi bi-trash"></i> Remove
+                                        </button>
+                                    </div>
+                                </div>
+                                <!-- Last item without border -->
+                                <div class="d-flex mb-4" th:if="${item == cart.cartItems.last}">
+                                    <div class="flex-shrink-0 me-3">
+                                        <input type="checkbox" 
+                                               class="form-check-input cart-item-checkbox" 
+                                               th:id="'checkbox-' + ${item.cartItemId}"
+                                               th:value="${item.cartItemId}"
+                                               th:attr="data-price=${item.bookPrice}, data-quantity=${item.quantity}, data-subtotal=${item.subtotal}"
+                                               style="width: 20px; height: 20px; cursor: pointer;"
+                                               onchange="updateTotals()">
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <img th:src="${item.bookImageUrl}" 
+                                             class="img-thumbnail" 
+                                             style="width: 100px; height: 120px; object-fit: cover;"
+                                             th:alt="${item.bookTitle}">
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 th:text="${item.bookTitle}">Book Title</h6>
+                                        <p class="text-muted mb-2" th:text="${item.bookAuthor}">Author</p>
+                                        <p class="text-primary mb-2" th:text="${#numbers.formatInteger(item.bookPrice.longValue(), 1, 'COMMA')} + ' VND'">0 VND</p>
+                                        
+                                        <!-- Quantity Selector -->
+                                        <div class="input-group" style="width: 150px;">
+                                            <button class="btn btn-outline-secondary" type="button" 
+                                                    th:onmousedown="'startCartAutoChange(' + ${item.cartItemId} + ', -1)'"
+                                                    onmouseup="stopCartAutoChange()"
+                                                    onmouseleave="stopCartAutoChange()"
+                                                    th:onclick="'changeCartQuantity(' + ${item.cartItemId} + ', -1)'"
+                                                    th:disabled="${item.quantity <= 1}">
+                                                <i class="bi bi-dash"></i>
+                                            </button>
+                                            <input type="number" 
+                                                   class="form-control text-center" 
+                                                   th:id="'quantity-' + ${item.cartItemId}"
+                                                   th:value="${item.quantity}" 
+                                                   min="1"
+                                                   th:max="${item.availableStock}"
+                                                   th:attr="data-max=${item.availableStock}, data-item-id=${item.cartItemId}"
+                                                   onchange="validateCartQuantity(this)"
+                                                   oninput="updateCartQuantityButtons(this)">
+                                            <button class="btn btn-outline-secondary" type="button" 
+                                                    th:onmousedown="'startCartAutoChange(' + ${item.cartItemId} + ', 1)'"
+                                                    onmouseup="stopCartAutoChange()"
+                                                    onmouseleave="stopCartAutoChange()"
+                                                    th:onclick="'changeCartQuantity(' + ${item.cartItemId} + ', 1)'"
+                                                    th:disabled="${item.quantity >= item.availableStock}">
+                                                <i class="bi bi-plus"></i>
+                                            </button>
+                                        </div>
+
+                                        <small class="text-muted d-block mt-2">
+                                            Stock: <span th:text="${item.availableStock}">0</span> available
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        <p class="h6 mb-2" th:id="'subtotal-' + ${item.cartItemId}" th:text="${#numbers.formatInteger(item.subtotal.longValue(), 1, 'COMMA')} + ' VND'">0 VND</p>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                th:onclick="'removeCartItem(' + ${item.cartItemId} + ')'">
+                                            <i class="bi bi-trash"></i> Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title mb-4">Order Summary</h5>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Items (<span id="selectedItemsCount">0</span>):</span>
+                                <span id="selectedItemsTotal">0 VND</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between mb-3">
+                                <strong>Total:</strong>
+                                <strong class="h5 text-primary" id="selectedTotal">0 VND</strong>
+                            </div>
+                            <button type="button" class="btn btn-primary btn-lg w-100" onclick="proceedToCheckout()" id="checkoutBtn" disabled>
+                                <i class="bi bi-credit-card me-2"></i>Proceed to Checkout
+                            </button>
+                            <a th:href="@{/books}" class="btn btn-outline-secondary w-100 mt-2">
+                                <i class="bi bi-arrow-left me-2"></i>Continue Shopping
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty Cart -->
+        <div th:if="${cart == null or cart.cartItems == null or cart.cartItems.empty}" class="text-center py-5">
+            <i class="bi bi-cart-x" style="font-size: 4rem; color: #ccc;"></i>
+            <h3 class="mt-3">Your cart is empty</h3>
+            <p class="text-muted">Start shopping to add items to your cart</p>
+            <a th:href="@{/books}" class="btn btn-primary mt-3">
+                <i class="bi bi-book me-2"></i>Browse Books
+            </a>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Cart Management Script -->
+    <script>
+        let cartAutoChangeInterval = null;
+        let cartAutoChangeCartItemId = null;
+        let cartAutoChangeDelta = 0;
+        
+        // Start auto increment/decrement for cart items
+        function startCartAutoChange(cartItemId, delta) {
+            stopCartAutoChange();
+            
+            cartAutoChangeCartItemId = cartItemId;
+            cartAutoChangeDelta = delta;
+            
+            // Initial change
+            changeCartQuantity(cartItemId, delta);
+            
+            // Set up interval for continuous change
+            setTimeout(() => {
+                cartAutoChangeInterval = setInterval(() => {
+                    changeCartQuantity(cartAutoChangeCartItemId, cartAutoChangeDelta);
+                }, 100);
+            }, 500);
+        }
+        
+        // Stop auto increment/decrement for cart items
+        function stopCartAutoChange() {
+            if (cartAutoChangeInterval) {
+                clearInterval(cartAutoChangeInterval);
+                cartAutoChangeInterval = null;
+            }
+            cartAutoChangeCartItemId = null;
+            cartAutoChangeDelta = 0;
+        }
+        
+        // Validate manual quantity input for cart items
+        function validateCartQuantity(input) {
+            const cartItemId = input.getAttribute('data-item-id');
+            const maxQuantity = parseInt(input.getAttribute('data-max')) || 999999;
+            let currentQuantity = parseInt(input.value) || 1;
+            
+            // Ensure quantity is within valid range
+            if (currentQuantity < 1) {
+                currentQuantity = 1;
+            } else if (currentQuantity > maxQuantity) {
+                currentQuantity = maxQuantity;
+            }
+            
+            // Update if changed
+            if (parseInt(input.value) !== currentQuantity) {
+                input.value = currentQuantity;
+            }
+            
+            // Update cart quantity
+            changeCartQuantity(cartItemId, 0); // 0 means use input value directly
+        }
+        
+        // Update button states for cart quantity
+        function updateCartQuantityButtons(input) {
+            const cartItemId = input.getAttribute('data-item-id');
+            const maxQuantity = parseInt(input.getAttribute('data-max')) || 999999;
+            const currentQuantity = parseInt(input.value) || 1;
+            
+            const decrementBtn = document.querySelector(`button[onmousedown*="startCartAutoChange(${cartItemId}, -1)"]`);
+            const incrementBtn = document.querySelector(`button[onmousedown*="startCartAutoChange(${cartItemId}, 1)"]`);
+            
+            if (decrementBtn) {
+                decrementBtn.disabled = (currentQuantity <= 1);
+            }
+            if (incrementBtn) {
+                incrementBtn.disabled = (currentQuantity >= maxQuantity);
+            }
+        }
+        
+        // Update quantity for a cart item
+        function changeCartQuantity(cartItemId, delta) {
+            const quantityInput = document.getElementById('quantity-' + cartItemId);
+            if (!quantityInput) return;
+            
+            const maxQuantity = parseInt(quantityInput.getAttribute('data-max')) || 999999;
+            let currentQuantity = parseInt(quantityInput.value) || 1;
+            
+            // If delta is 0, use the input value directly (for manual input)
+            if (delta !== 0) {
+                currentQuantity += delta;
+            }
+            
+            if (currentQuantity < 1) {
+                currentQuantity = 1;
+            } else if (currentQuantity > maxQuantity) {
+                currentQuantity = maxQuantity;
+            }
+            
+            // Update input value
+            quantityInput.value = currentQuantity;
+            
+            // Update button states
+            updateCartQuantityButtons(quantityInput);
+            
+            // Update quantity via AJAX
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/cart/update/' + cartItemId;
+            
+            const csrfToken = document.getElementById('csrfToken').value;
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_csrf';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+            
+            const quantityInputField = document.createElement('input');
+            quantityInputField.type = 'hidden';
+            quantityInputField.name = 'quantity';
+            quantityInputField.value = currentQuantity;
+            form.appendChild(quantityInputField);
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+        
+        // Remove a single cart item
+        function removeCartItem(cartItemId) {
+            if (confirm('Are you sure you want to remove this item from your cart?')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/cart/remove/' + cartItemId;
+                
+                const csrfToken = document.getElementById('csrfToken').value;
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_csrf';
+                csrfInput.value = csrfToken;
+                form.appendChild(csrfInput);
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+        
+        // Update totals and button states based on selected items
+        function updateTotals() {
+            const checkboxes = document.querySelectorAll('.cart-item-checkbox');
+            const checkedBoxes = document.querySelectorAll('.cart-item-checkbox:checked');
+            const removeBtn = document.getElementById('removeSelectedBtn');
+            const checkoutBtn = document.getElementById('checkoutBtn');
+            const selectAllCheckbox = document.getElementById('selectAll');
+            
+            // Update select all checkbox state
+            if (selectAllCheckbox && checkboxes.length > 0) {
+                selectAllCheckbox.checked = checkedBoxes.length === checkboxes.length;
+            }
+            
+            // Update remove button state
+            if (removeBtn) {
+                removeBtn.disabled = checkedBoxes.length === 0;
+            }
+            
+            // Calculate totals for selected items
+            let totalItems = 0;
+            let totalAmount = 0;
+            
+            checkedBoxes.forEach(checkbox => {
+                const quantity = parseInt(checkbox.getAttribute('data-quantity')) || 0;
+                const subtotal = parseFloat(checkbox.getAttribute('data-subtotal')) || 0;
+                totalItems += quantity;
+                totalAmount += subtotal;
+            });
+            
+            // Update display
+            const itemsCountEl = document.getElementById('selectedItemsCount');
+            const itemsTotalEl = document.getElementById('selectedItemsTotal');
+            const totalEl = document.getElementById('selectedTotal');
+            
+            if (itemsCountEl) {
+                itemsCountEl.textContent = totalItems;
+            }
+            if (itemsTotalEl) {
+                itemsTotalEl.textContent = formatVND(totalAmount);
+            }
+            if (totalEl) {
+                totalEl.textContent = formatVND(totalAmount);
+            }
+            
+            // Update checkout button state
+            if (checkoutBtn) {
+                checkoutBtn.disabled = checkedBoxes.length === 0;
+            }
+        }
+        
+        // Format number as VND
+        function formatVND(amount) {
+            return Math.round(amount).toLocaleString('en-US') + ' VND';
+        }
+        
+        // Update remove selected button state (kept for compatibility)
+        function updateRemoveButton() {
+            updateTotals();
+        }
+        
+        // Remove selected items
+        function removeSelected() {
+            const checkboxes = document.querySelectorAll('.cart-item-checkbox:checked');
+            if (checkboxes.length === 0) {
+                return;
+            }
+            
+            if (confirm('Are you sure you want to remove ' + checkboxes.length + ' selected item(s) from your cart?')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/cart/remove-selected';
+                
+                const csrfToken = document.getElementById('csrfToken').value;
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_csrf';
+                csrfInput.value = csrfToken;
+                form.appendChild(csrfInput);
+                
+                checkboxes.forEach(checkbox => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'cartItemIds';
+                    input.value = checkbox.value;
+                    form.appendChild(input);
+                });
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+        
+        // Select all checkboxes
+        function selectAll() {
+            const checkboxes = document.querySelectorAll('.cart-item-checkbox');
+            const selectAllCheckbox = document.getElementById('selectAll');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+            updateTotals();
+        }
+        
+        // Proceed to checkout with selected items
+        function proceedToCheckout() {
+            const checkboxes = document.querySelectorAll('.cart-item-checkbox:checked');
+            if (checkboxes.length === 0) {
+                alert('Please select at least one item to checkout');
+                return;
+            }
+            
+            // Store selected item IDs in sessionStorage and redirect
+            const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+            sessionStorage.setItem('selectedCartItems', JSON.stringify(selectedIds));
+            window.location.href = '/orders/checkout';
+        }
+        
+        // Initialize totals on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check all items by default
+            const checkboxes = document.querySelectorAll('.cart-item-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            const selectAllCheckbox = document.getElementById('selectAll');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = true;
+            }
+            updateTotals();
+        });
+    </script>
+</body>
+</html>
+

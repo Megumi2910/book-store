@@ -6,17 +6,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Book Store - Home</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        .book-card {
+            min-width: 200px;
+            max-width: 200px;
+        }
+        .horizontal-scroll {
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+        }
+        .horizontal-scroll::-webkit-scrollbar {
+            height: 8px;
+        }
+        .horizontal-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .horizontal-scroll::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        .horizontal-scroll::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .book-card-inline {
+            display: inline-block;
+            vertical-align: top;
+            white-space: normal;
+            margin-right: 15px;
+        }
+    </style>
 </head>
 <body>
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
-            <a class="navbar-brand" href="/">📚 Book Store</a>
+            <a class="navbar-brand" th:href="@{/}">📚 Book Store</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/books}">Browse Books</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <a class="nav-link" th:href="@{/cart}">
+                            🛒 Cart
+                            <span class="badge bg-light text-dark" th:text="${cartItemCount}" th:if="${cartItemCount != null and cartItemCount > 0}">0</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <a class="nav-link" th:href="@{/orders}">My Orders</a>
+                    </li>
                     <li class="nav-item" sec:authorize="!isAuthenticated()">
                         <a class="nav-link" th:href="@{/login}">Login</a>
                     </li>
@@ -28,8 +74,8 @@
                             <span th:text="${userEmail}">user@example.com</span>
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#">Profile</a></li>
                             <li><a class="dropdown-item" th:href="@{/change-password}">Change Password</a></li>
+                            <li sec:authorize="hasRole('ADMIN')"><a class="dropdown-item" th:href="@{/admin/dashboard}">Admin Dashboard</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form th:action="@{/logout}" method="post" style="display: inline;">
@@ -74,59 +120,98 @@
          style="display: none;"></div>
 
     <!-- Main Content -->
-    <div class="container mt-5">
+    <div class="container mt-4 mb-5">
         <!-- Welcome Message -->
-        <div class="row">
+        <div class="row mb-4">
             <div class="col-12">
-                <div class="alert alert-success" role="alert" sec:authorize="isAuthenticated()">
-                    <h4 class="alert-heading">Welcome back!</h4>
-                    <p>You are logged in as <strong th:text="${userEmail}">user@example.com</strong></p>
-                    <p class="mb-0">
-                        Role: <span class="badge bg-primary" th:text="${userRole}">USER</span>
-                        <span sec:authorize="hasRole('ADMIN')" class="ms-3">
-                            <a th:href="@{/admin/dashboard}" class="btn btn-sm btn-primary">
-                                <i class="bi bi-speedometer2 me-1"></i> Go to Admin Dashboard
-                            </a>
-                        </span>
-                    </p>
-                </div>
-                
                 <div class="alert alert-info" role="alert" sec:authorize="!isAuthenticated()">
                     <h4 class="alert-heading">Welcome to Book Store!</h4>
-                    <p>Please <a th:href="@{/login}" class="alert-link">login</a> or <a th:href="@{/register}" class="alert-link">register</a> to continue.</p>
+                    <p class="mb-0">Please <a th:href="@{/login}" class="alert-link">login</a> or <a th:href="@{/register}" class="alert-link">register</a> to add items to cart and place orders.</p>
+                </div>
+                <div class="alert alert-success" role="alert" sec:authorize="isAuthenticated()">
+                    <h4 class="alert-heading">Welcome back!</h4>
+                    <p class="mb-0">You are logged in as <strong th:text="${userEmail}">user@example.com</strong></p>
                 </div>
             </div>
         </div>
 
-        <!-- Content Cards -->
-        <div class="row mt-4">
-            <div class="col-md-4 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">📖 Browse Books</h5>
-                        <p class="card-text">Explore our collection of books.</p>
-                        <a href="#" class="btn btn-primary">Browse</a>
+        <!-- Recently Added Books (Horizontal Scroll) -->
+        <div class="mb-5" th:if="${recentlyAddedBooks != null and !recentlyAddedBooks.empty}">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>🆕 Recently Added</h3>
+            </div>
+            <div class="horizontal-scroll pb-3">
+                <div th:each="book : ${recentlyAddedBooks}" class="book-card-inline">
+                    <div class="card book-card shadow-sm">
+                        <div class="position-relative">
+                            <img th:src="${book.imageUrl != null ? book.imageUrl : '/images/placeholder.jpg'}" 
+                                 class="card-img-top" 
+                                 style="height: 250px; object-fit: cover;"
+                                 th:alt="${book.title}">
+                            <span th:if="${book.quantity != null and book.quantity == 0}" 
+                                  class="badge bg-danger position-absolute top-0 end-0 m-2">
+                                Out of Stock
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-title text-truncate" th:text="${book.title}">Book Title</h6>
+                            <p class="text-muted small mb-2 text-truncate" th:text="${book.author}">Author</p>
+                            <p class="h6 text-primary mb-2" th:text="${#numbers.formatInteger(book.price.longValue(), 1, 'COMMA')} + ' VND'">0 VND</p>
+                            <a th:href="@{/books/{id}(id=${book.bookId})}" class="btn btn-sm btn-primary w-100">
+                                View Details
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">🛒 Shopping Cart</h5>
-                        <p class="card-text">View your shopping cart.</p>
-                        <a href="#" class="btn btn-primary">View Cart</a>
+        </div>
+
+        <!-- Popular Books (3-Row Grid) -->
+        <div class="mb-4" th:if="${popularBooks != null and !popularBooks.empty}">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>🔥 Popular Books</h3>
+                <a th:href="@{/books(popular=true)}" class="btn btn-outline-primary">
+                    See More <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div class="row">
+                <div th:each="book : ${popularBooks}" class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="position-relative">
+                            <img th:src="${book.imageUrl != null ? book.imageUrl : '/images/placeholder.jpg'}" 
+                                 class="card-img-top" 
+                                 style="height: 300px; object-fit: cover;"
+                                 th:alt="${book.title}">
+                            <span th:if="${book.quantity != null and book.quantity == 0}" 
+                                  class="badge bg-danger position-absolute top-0 end-0 m-2">
+                                Out of Stock
+                            </span>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title" th:text="${book.title}">Book Title</h5>
+                            <p class="text-muted mb-2" th:text="${book.author}">Author</p>
+                            <p class="card-text flex-grow-1">
+                                <small class="text-muted" th:text="${book.description != null ? (#strings.abbreviate(book.description, 100)) : 'No description available'}">
+                                    Description
+                                </small>
+                            </p>
+                            <div class="mt-auto">
+                                <p class="h5 text-primary mb-2" th:text="${#numbers.formatInteger(book.price.longValue(), 1, 'COMMA')} + ' VND'">0 VND</p>
+                                <a th:href="@{/books/{id}(id=${book.bookId})}" class="btn btn-primary w-100">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">📋 My Orders</h5>
-                        <p class="card-text">Track your orders.</p>
-                        <a href="#" class="btn btn-primary">My Orders</a>
-                    </div>
-                </div>
-            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div th:if="${(recentlyAddedBooks == null or recentlyAddedBooks.empty) and (popularBooks == null or popularBooks.empty)}" class="text-center py-5">
+            <i class="bi bi-book" style="font-size: 4rem; color: #ccc;"></i>
+            <h3 class="mt-3">No books available</h3>
+            <p class="text-muted">Check back soon for new books!</p>
         </div>
     </div>
 
@@ -136,7 +221,6 @@
     <!-- Send Verification Email Popup Script -->
     <script>
         function openSendVerifyEmailPopup() {
-            // Open verification email page in a small popup window
             const width = 500;
             const height = 300;
             const left = (screen.width / 2) - (width / 2);
@@ -148,35 +232,29 @@
                 `width=${width},height=${height},left=${left},top=${top},resizable=no,scrollbars=no,status=no,toolbar=no,menubar=no`
             );
             
-            // Focus the popup window
             if (popup) {
                 popup.focus();
             }
             
-            // Start cooldown after successful send
             startCooldownTimer(60);
         }
         
-        // Countdown timer for rate limiting
         function startCooldownTimer(seconds) {
             const link = document.getElementById('sendEmailLink');
             const cooldownText = document.getElementById('cooldownText');
-            const linkTextSpan = link.querySelector('span:first-child');
+            const linkTextSpan = link ? link.querySelector('span:first-child') : null;
             
             if (!link) return;
             
-            // Disable link
             link.style.pointerEvents = 'none';
             link.style.opacity = '0.5';
             link.style.color = 'gray';
             link.classList.add('disabled');
             
-            // Change text to "Resend Email"
             if (linkTextSpan) {
                 linkTextSpan.textContent = 'Resend Email';
             }
             
-            // Create cooldown text if it doesn't exist
             if (!cooldownText) {
                 const newCooldownText = document.createElement('span');
                 newCooldownText.id = 'cooldownText';
@@ -193,12 +271,10 @@
                 
                 if (remaining <= 0) {
                     clearInterval(timer);
-                    // Re-enable link
                     link.style.pointerEvents = '';
                     link.style.opacity = '';
                     link.style.color = '';
                     link.classList.remove('disabled');
-                    // Remove countdown text
                     if (cooldownElement) {
                         cooldownElement.remove();
                     }
@@ -206,7 +282,6 @@
             }, 1000);
         }
         
-        // Initialize cooldown on page load if needed
         document.addEventListener('DOMContentLoaded', function() {
             const cooldownData = document.getElementById('emailCooldownData');
             if (cooldownData) {
@@ -219,4 +294,3 @@
     </script>
 </body>
 </html>
-

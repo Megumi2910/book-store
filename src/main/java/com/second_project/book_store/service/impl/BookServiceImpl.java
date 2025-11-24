@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,10 +54,13 @@ public class BookServiceImpl implements BookService {
     public BookDto createBook(BookDto bookDto) {
         logger.info("Creating new book: {}", bookDto.getTitle());
 
-        // Validate ISBN uniqueness
-        if (bookDto.getIsbn() != null && !bookDto.getIsbn().isBlank()) {
-            if (bookRepository.existsByIsbn(bookDto.getIsbn())) {
-                throw new IllegalArgumentException("ISBN already exists: " + bookDto.getIsbn());
+        // Normalize ISBN first
+        String normalizedIsbn = normalizeIsbn(bookDto.getIsbn());
+        
+        // Validate ISBN uniqueness (only if not null)
+        if (normalizedIsbn != null) {
+            if (bookRepository.existsByIsbn(normalizedIsbn)) {
+                throw new IllegalArgumentException("ISBN already exists: " + normalizedIsbn);
             }
         }
 
@@ -64,7 +68,7 @@ public class BookServiceImpl implements BookService {
         Book book = new Book();
         book.setTitle(bookDto.getTitle());
         book.setAuthor(bookDto.getAuthor());
-        book.setIsbn(bookDto.getIsbn());
+        book.setIsbn(normalizedIsbn);
 
         // Create BookDetail entity
         BookDetail bookDetail = new BookDetail();
@@ -106,17 +110,20 @@ public class BookServiceImpl implements BookService {
         Book book = bookRepository.findById(bookId)
             .orElseThrow(() -> new IllegalArgumentException("Book not found: " + bookId));
 
-        // Validate ISBN uniqueness (exclude current book)
-        if (bookDto.getIsbn() != null && !bookDto.getIsbn().isBlank()) {
-            if (bookRepository.existsByIsbnAndBookIdNot(bookDto.getIsbn(), bookId)) {
-                throw new IllegalArgumentException("ISBN already exists: " + bookDto.getIsbn());
+        // Normalize ISBN first
+        String normalizedIsbn = normalizeIsbn(bookDto.getIsbn());
+        
+        // Validate ISBN uniqueness (exclude current book, only if not null)
+        if (normalizedIsbn != null) {
+            if (bookRepository.existsByIsbnAndBookIdNot(normalizedIsbn, bookId)) {
+                throw new IllegalArgumentException("ISBN already exists: " + normalizedIsbn);
             }
         }
 
         // Update Book fields
         book.setTitle(bookDto.getTitle());
         book.setAuthor(bookDto.getAuthor());
-        book.setIsbn(bookDto.getIsbn());
+        book.setIsbn(normalizedIsbn);
 
         // Update BookDetail fields
         BookDetail bookDetail = book.getBookDetail();
@@ -228,6 +235,30 @@ public class BookServiceImpl implements BookService {
         return bookRepository.existsByIsbnAndBookIdNot(isbn, bookId);
     }
 
+    @Override
+    public List<BookDto> getRecentlyAddedBooks(int limit) {
+        Pageable pageable = PageRequest.of(0, limit);
+        Page<Book> books = bookRepository.findRecentlyAddedBooks(pageable);
+        return books.getContent().stream()
+            .map(this::convertToDto)
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<BookDto> getPopularBooks(int limit) {
+        Pageable pageable = PageRequest.of(0, limit);
+        Page<Book> books = bookRepository.findPopularBooks(pageable);
+        return books.getContent().stream()
+            .map(this::convertToDto)
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<BookDto> getPopularBooks(Pageable pageable) {
+        Page<Book> books = bookRepository.findPopularBooks(pageable);
+        return books.map(this::convertToDto);
+    }
+
     /**
      * Convert Book entity to BookDto.
      * 
@@ -268,6 +299,21 @@ public class BookServiceImpl implements BookService {
         dto.setReviewCount(reviewRepository.countByBook_BookId(book.getBookId()));
 
         return dto;
+    }
+
+    /**
+     * Normalize ISBN: convert empty strings to null.
+     * This prevents unique constraint violations since databases allow multiple NULLs
+     * but not duplicate empty strings.
+     * 
+     * @param isbn The ISBN string (can be null, empty, or blank)
+     * @return null if ISBN is null/empty/blank, otherwise trimmed ISBN
+     */
+    private String normalizeIsbn(String isbn) {
+        if (isbn == null || isbn.trim().isEmpty()) {
+            return null;
+        }
+        return isbn.trim();
     }
 }
 

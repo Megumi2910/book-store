@@ -34,6 +34,14 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         
         logger.info("User authenticated successfully: {}", authentication.getName());
 
+        // Check for redirect parameter first
+        String redirectUrl = request.getParameter("redirect");
+        if (redirectUrl != null && !redirectUrl.isEmpty() && redirectUrl.startsWith("/")) {
+            logger.info("Redirect parameter found, redirecting to: {}", redirectUrl);
+            response.sendRedirect(redirectUrl);
+            return;
+        }
+
         // Check if user has ADMIN role
         if (authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
             logger.info("Admin user detected, redirecting to admin dashboard");

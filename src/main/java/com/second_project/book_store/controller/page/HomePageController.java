@@ -8,7 +8,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import java.util.List;
+
+import com.second_project.book_store.model.BookDto;
 import com.second_project.book_store.security.CustomUserDetails;
+import com.second_project.book_store.service.BookService;
+import com.second_project.book_store.service.CartService;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -20,6 +25,14 @@ import jakarta.servlet.http.HttpSession;
  */
 @Controller
 public class HomePageController {
+
+    private final BookService bookService;
+    private final CartService cartService;
+
+    public HomePageController(BookService bookService, CartService cartService) {
+        this.bookService = bookService;
+        this.cartService = cartService;
+    }
 
     /**
      * Display home page.
@@ -55,6 +68,21 @@ public class HomePageController {
             }
         } else {
             model.addAttribute("isAuthenticated", false);
+        }
+
+        // Get recently added books (for horizontal scroll)
+        List<BookDto> recentlyAddedBooks = bookService.getRecentlyAddedBooks(12);
+        model.addAttribute("recentlyAddedBooks", recentlyAddedBooks);
+
+        // Get popular books (for 3-row grid - 9 books)
+        List<BookDto> popularBooks = bookService.getPopularBooks(9);
+        model.addAttribute("popularBooks", popularBooks);
+
+        // Add cart item count for authenticated users
+        if (authentication != null && authentication.isAuthenticated()) {
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            Integer cartItemCount = cartService.getCartItemCount(userDetails.getUserId());
+            model.addAttribute("cartItemCount", cartItemCount);
         }
         
         return "index";  // Thymeleaf template: src/main/resources/templates/index.html

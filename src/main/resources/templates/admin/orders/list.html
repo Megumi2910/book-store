@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout/base}">
+<head>
+    <title>Orders - Admin</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <!-- Page Header -->
+        <div class="mb-4">
+            <h2 class="mb-1">📦 Order Management</h2>
+            <p class="text-muted mb-0">Manage customer orders</p>
+        </div>
+
+        <!-- Success/Error Messages -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Filter -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form th:action="@{/admin/orders}" method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <select class="form-select" name="status">
+                            <option value="">All Statuses</option>
+                            <option th:each="status : ${statuses}" 
+                                    th:value="${status.name()}" 
+                                    th:text="${status}"
+                                    th:selected="${selectedStatus != null and selectedStatus == status.name()}">
+                                Status
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" name="size">
+                            <option value="20" th:selected="${param.size == null or param.size[0] == '20'}">20 per page</option>
+                            <option value="50" th:selected="${param.size != null and param.size[0] == '50'}">50 per page</option>
+                            <option value="100" th:selected="${param.size != null and param.size[0] == '100'}">100 per page</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">Filter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Orders Table -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Total</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="order : ${orderPage.content}">
+                                <td>#<span th:text="${order.orderId}">0</span></td>
+                                <td th:text="${order.userEmail}">user@example.com</td>
+                                <td>
+                                    <small th:text="${#temporals.format(order.orderDate, 'MMM dd, yyyy HH:mm')}">Date</small>
+                                </td>
+                                <td>
+                                    <span class="badge" 
+                                          th:classappend="${order.orderStatus.name() == 'PENDING'} ? 'bg-warning' : 
+                                                          (${order.orderStatus.name() == 'SHIPPED'} ? 'bg-info' : 
+                                                          (${order.orderStatus.name() == 'DELIVERED'} ? 'bg-success' : 'bg-secondary'))"
+                                          th:text="${order.orderStatus}">PENDING</span>
+                                </td>
+                                <td th:text="${#numbers.formatInteger(order.totalAmount.longValue(), 1, 'COMMA')} + ' VND'">0 VND</td>
+                                <td>
+                                    <a th:href="@{/admin/orders/{id}(id=${order.orderId})}" class="btn btn-sm btn-outline-primary">
+                                        View
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <nav th:if="${totalPages > 1}" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                            <a class="page-link" th:href="@{/admin/orders(status=${selectedStatus}, size=${param.size != null ? param.size[0] : 20}, page=${currentPage - 1})}">Previous</a>
+                        </li>
+                        <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}" 
+                            class="page-item" 
+                            th:classappend="${i == currentPage} ? 'active'">
+                            <a class="page-link" th:href="@{/admin/orders(status=${selectedStatus}, size=${param.size != null ? param.size[0] : 20}, page=${i})}" th:text="${i + 1}">1</a>
+                        </li>
+                        <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                            <a class="page-link" th:href="@{/admin/orders(status=${selectedStatus}, size=${param.size != null ? param.size[0] : 20}, page=${currentPage + 1})}">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

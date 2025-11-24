@@ -36,7 +36,7 @@ public class LoginPageController {
      * @return Thymeleaf template name
      */
     @GetMapping("/login")
-    public String showLoginForm(String error, String logout, Model model) {
+    public String showLoginForm(String error, String logout, String redirect, Model model) {
         // Check for login error
         if (error != null) {
             model.addAttribute("error", "Invalid email or password. Please try again.");
@@ -45,6 +45,11 @@ public class LoginPageController {
         // Check for logout success
         if (logout != null) {
             model.addAttribute("success", "You have been logged out successfully.");
+        }
+
+        // Store redirect URL if provided
+        if (redirect != null && !redirect.isEmpty()) {
+            model.addAttribute("redirect", redirect);
         }
         
         // Note: Success message from password reset is handled via flash attributes

@@ -82,7 +82,9 @@
                                 <!-- Title & Author -->
                                 <td>
                                     <div>
-                                        <strong th:text="${book.title}">Book Title</strong>
+                                        <a class="text-decoration-none text-dark" th:href= "@{/admin/books/{id}(id=${book.bookId})}">
+                                            <strong th:text="${book.title}">Book Title</strong>
+                                        </a>
                                         <br>
                                         <small class="text-muted" th:text="${book.author}">Author Name</small>
                                     </div>
@@ -93,7 +95,7 @@
                                 </td>
                                 <!-- Price -->
                                 <td>
-                                    <strong th:text="${'$' + #numbers.formatDecimal(book.price, 1, 2)}">$0.00</strong>
+                                    <strong th:text="${#numbers.formatInteger(book.price.longValue(), 1, 'COMMA')} + ' VND'">0 VND</strong>
                                 </td>
                                 <!-- Stock -->
                                 <td>
