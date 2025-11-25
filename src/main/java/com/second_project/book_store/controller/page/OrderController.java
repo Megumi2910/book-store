@@ -18,6 +18,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.second_project.book_store.model.CartDto;
 import com.second_project.book_store.model.CheckoutRequestDto;
 import com.second_project.book_store.model.OrderDto;
@@ -53,7 +56,10 @@ public class OrderController {
      * Show checkout page.
      */
     @GetMapping("/checkout")
-    public String showCheckout(Authentication authentication, Model model) {
+    public String showCheckout(
+            @RequestParam(required = false) String selectedItems,
+            Authentication authentication, 
+            Model model) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         Long userId = userDetails.getUserId();
 
@@ -65,11 +71,42 @@ public class OrderController {
             return "redirect:/cart?error=Cart is empty";
         }
 
+        // Filter cart items if selectedItems is provided
+        if (selectedItems != null && !selectedItems.trim().isEmpty()) {
+            String[] selectedIds = selectedItems.split(",");
+            List<Long> selectedIdList = new ArrayList<>();
+            for (String id : selectedIds) {
+                try {
+                    selectedIdList.add(Long.parseLong(id.trim()));
+                } catch (NumberFormatException e) {
+                    logger.warn("Invalid cart item ID in selectedItems: {}", id);
+                }
+            }
+            
+            // Filter cart items to only include selected ones
+            if (!selectedIdList.isEmpty()) {
+                List<com.second_project.book_store.model.CartItemDto> filteredItems = 
+                    cart.getCartItems().stream()
+                        .filter(item -> selectedIdList.contains(item.getCartItemId()))
+                        .collect(java.util.stream.Collectors.toList());
+                
+                if (filteredItems.isEmpty()) {
+                    return "redirect:/cart?error=No valid items selected";
+                }
+                
+                cart.setCartItems(filteredItems);
+                cart.calculateTotals();
+            }
+        }
+
         // Get user's address to pre-fill
         String userAddress = userService.findUserByEmail(userDetails.getEmail()).getAddress();
         CheckoutRequestDto checkoutRequest = new CheckoutRequestDto();
         if (userAddress != null && !userAddress.trim().isEmpty()) {
             checkoutRequest.setShippingAddress(userAddress);
+        }
+        if (selectedItems != null && !selectedItems.trim().isEmpty()) {
+            checkoutRequest.setSelectedCartItemIds(selectedItems);
         }
 
         model.addAttribute("cart", cart);
@@ -115,10 +152,40 @@ public class OrderController {
             return "redirect:/orders/" + order.getOrderId();
         } catch (IllegalArgumentException e) {
             logger.warn("Checkout failed: {}", e.getMessage());
+            // Re-fetch cart with selected items filter for display
+            CartDto cart = cartService.getOrCreateCart(userId);
+            // Re-apply filter if selectedCartItemIds was provided
+            if (checkoutRequest.getSelectedCartItemIds() != null && !checkoutRequest.getSelectedCartItemIds().trim().isEmpty()) {
+                String[] selectedIds = checkoutRequest.getSelectedCartItemIds().split(",");
+                List<Long> selectedIdList = new ArrayList<>();
+                for (String id : selectedIds) {
+                    try {
+                        selectedIdList.add(Long.parseLong(id.trim()));
+                    } catch (NumberFormatException ex) {
+                        // Ignore invalid IDs
+                    }
+                }
+                if (!selectedIdList.isEmpty() && cart.getCartItems() != null) {
+                    List<com.second_project.book_store.model.CartItemDto> filteredItems = 
+                        cart.getCartItems().stream()
+                            .filter(item -> selectedIdList.contains(item.getCartItemId()))
+                            .collect(java.util.stream.Collectors.toList());
+                    cart.setCartItems(filteredItems);
+                    cart.calculateTotals();
+                }
+            }
+            model.addAttribute("cart", cart);
+            model.addAttribute("userEmail", userDetails.getEmail());
+            model.addAttribute("checkoutRequest", checkoutRequest);
+            model.addAttribute("error", e.getMessage());
+            return "orders/checkout";
+        } catch (Exception e) {
+            logger.error("Unexpected error during checkout", e);
             CartDto cart = cartService.getOrCreateCart(userId);
             model.addAttribute("cart", cart);
             model.addAttribute("userEmail", userDetails.getEmail());
-            model.addAttribute("error", e.getMessage());
+            model.addAttribute("checkoutRequest", checkoutRequest);
+            model.addAttribute("error", "An error occurred while processing your order. Please try again.");
             return "orders/checkout";
         }
     }

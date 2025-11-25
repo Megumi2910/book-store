@@ -59,8 +59,8 @@
                                             </div>
                                         </td>
                                         <td th:text="${item.quantity}">1</td>
-                                        <td th:text="${#numbers.formatInteger(item.priceAtPurchase.longValue(), 1, 'COMMA')} + ' VND'">0 VND</td>
-                                        <td th:text="${#numbers.formatInteger(item.subtotal.longValue(), 1, 'COMMA')} + ' VND'">0 VND</td>
+                                        <td th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(item.priceAtPurchase)}">0 VND</td>
+                                        <td th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(item.subtotal)}">0 VND</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -96,7 +96,7 @@
                         <hr>
                         <div class="mb-3">
                             <strong>Total Amount:</strong>
-                            <h4 class="text-primary mb-0" th:text="${#numbers.formatInteger(order.totalAmount.longValue(), 1, 'COMMA')} + ' VND'">0 VND</h4>
+                            <h4 class="text-primary mb-0" th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(order.totalAmount)}">0 VND</h4>
                         </div>
                     </div>
                 </div>

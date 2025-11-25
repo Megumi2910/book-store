@@ -23,12 +23,14 @@ import com.second_project.book_store.entity.User.UserRole;
  * - No database lookup needed in controllers
  * - Better performance and memory efficiency
  * - Cleaner code
- * - userId, email, role, enabled available directly from Authentication
+ * - userId, firstName, lastName, fullName, email, role, enabled available directly from Authentication
  * - No risk of lazy loading exceptions
  */
 public class CustomUserDetails implements UserDetails {
 
     private final Long userId;
+    private final String firstName;
+    private final String lastName;
     private final String email;
     private final String password;
     private final UserRole role;
@@ -38,15 +40,23 @@ public class CustomUserDetails implements UserDetails {
      * Constructor with null safety checks.
      * 
      * @param userId User ID (required)
+     * @param firstName User first name (required)
+     * @param lastName User last name (required)
      * @param email User email (required)
      * @param password Hashed password (required)
      * @param role User role (required)
      * @param enabled Whether account is enabled/verified (required)
      * @throws IllegalArgumentException if any required parameter is null
      */
-    public CustomUserDetails(Long userId, String email, String password, UserRole role, boolean enabled) {
+    public CustomUserDetails(Long userId, String firstName, String lastName, String email, String password, UserRole role, boolean enabled) {
         if (userId == null) {
             throw new IllegalArgumentException("User ID cannot be null");
+        }
+        if (firstName == null || firstName.isBlank()) {
+            throw new IllegalArgumentException("First name cannot be null or blank");
+        }
+        if (lastName == null || lastName.isBlank()) {
+            throw new IllegalArgumentException("Last name cannot be null or blank");
         }
         if (email == null || email.isBlank()) {
             throw new IllegalArgumentException("Email cannot be null or blank");
@@ -59,6 +69,8 @@ public class CustomUserDetails implements UserDetails {
         }
         
         this.userId = userId;
+        this.firstName = firstName;
+        this.lastName = lastName;
         this.email = email;
         this.password = password;
         this.role = role;
@@ -78,6 +90,8 @@ public class CustomUserDetails implements UserDetails {
         }
         
         this.userId = user.getUserId();
+        this.firstName = user.getFirstName();
+        this.lastName = user.getLastName();
         this.email = user.getEmail();
         this.password = user.getPassword();
         this.role = user.getRole();
@@ -86,6 +100,12 @@ public class CustomUserDetails implements UserDetails {
         // Validate extracted fields
         if (this.userId == null) {
             throw new IllegalArgumentException("User ID cannot be null");
+        }
+        if (this.firstName == null || this.firstName.isBlank()) {
+            throw new IllegalArgumentException("User first name cannot be null or blank");
+        }
+        if (this.lastName == null || this.lastName.isBlank()) {
+            throw new IllegalArgumentException("User last name cannot be null or blank");
         }
         if (this.email == null || this.email.isBlank()) {
             throw new IllegalArgumentException("User email cannot be null or blank");
@@ -106,6 +126,34 @@ public class CustomUserDetails implements UserDetails {
      */
     public Long getUserId() {
         return userId;
+    }
+
+    /**
+     * Returns the user's first name.
+     * 
+     * @return User first name (never null)
+     */
+    public String getFirstName() {
+        return firstName;
+    }
+
+    /**
+     * Returns the user's last name.
+     * 
+     * @return User last name (never null)
+     */
+    public String getLastName() {
+        return lastName;
+    }
+
+    /**
+     * Returns the user's full name (first name + last name).
+     * This is the preferred method for displaying user names in the UI.
+     * 
+     * @return User full name formatted as "FirstName LastName" (never null)
+     */
+    public String getFullName() {
+        return firstName + " " + lastName;
     }
 
     /**
@@ -237,6 +285,8 @@ public class CustomUserDetails implements UserDetails {
     public String toString() {
         return "CustomUserDetails{" +
                 "userId=" + userId +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
                 ", email='" + email + '\'' +
                 ", role=" + role +
                 ", enabled=" + enabled +

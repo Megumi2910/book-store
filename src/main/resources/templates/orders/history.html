@@ -29,7 +29,7 @@
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            <span sec:authentication="principal.email">user@example.com</span>
+                            <span sec:authentication="principal.fullName">User Name</span>
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" th:href="@{/change-password}">Change Password</a></li>
@@ -83,7 +83,7 @@
                                           th:text="${order.orderStatus}">PENDING</span>
                                 </div>
                                 <div class="col-md-2 text-end">
-                                    <strong th:text="${#numbers.formatInteger(order.totalAmount.longValue(), 1, 'COMMA')} + ' VND'">0 VND</strong>
+                                    <strong th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(order.totalAmount)}">0 VND</strong>
                                 </div>
                                 <div class="col-md-1 text-end">
                                     <a th:href="@{/orders/{id}(id=${order.orderId})}" class="btn btn-sm btn-outline-primary">
@@ -109,7 +109,7 @@
                                           th:text="${order.orderStatus}">PENDING</span>
                                 </div>
                                 <div class="col-md-2 text-end">
-                                    <strong th:text="${#numbers.formatInteger(order.totalAmount.longValue(), 1, 'COMMA')} + ' VND'">0 VND</strong>
+                                    <strong th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(order.totalAmount)}">0 VND</strong>
                                 </div>
                                 <div class="col-md-1 text-end">
                                     <a th:href="@{/orders/{id}(id=${order.orderId})}" class="btn btn-sm btn-outline-primary">

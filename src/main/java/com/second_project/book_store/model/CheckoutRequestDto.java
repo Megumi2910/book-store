@@ -16,6 +16,8 @@ public class CheckoutRequestDto {
     @NotBlank(message = "Payment method is required")
     private String paymentMethod; // "COD" or "QR"
 
+    private String selectedCartItemIds; // Comma-separated list of cart item IDs to checkout
+
     public CheckoutRequestDto() {}
 
     public CheckoutRequestDto(String shippingAddress, String paymentMethod) {
@@ -38,6 +40,14 @@ public class CheckoutRequestDto {
 
     public void setPaymentMethod(String paymentMethod) {
         this.paymentMethod = paymentMethod;
+    }
+
+    public String getSelectedCartItemIds() {
+        return selectedCartItemIds;
+    }
+
+    public void setSelectedCartItemIds(String selectedCartItemIds) {
+        this.selectedCartItemIds = selectedCartItemIds;
     }
 }
 

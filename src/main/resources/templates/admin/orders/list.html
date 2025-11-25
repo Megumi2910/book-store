@@ -81,7 +81,7 @@
                                                           (${order.orderStatus.name() == 'DELIVERED'} ? 'bg-success' : 'bg-secondary'))"
                                           th:text="${order.orderStatus}">PENDING</span>
                                 </td>
-                                <td th:text="${#numbers.formatInteger(order.totalAmount.longValue(), 1, 'COMMA')} + ' VND'">0 VND</td>
+                                <td th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(order.totalAmount)}">0 VND</td>
                                 <td>
                                     <a th:href="@{/admin/orders/{id}(id=${order.orderId})}" class="btn btn-sm btn-outline-primary">
                                         View

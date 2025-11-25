@@ -16,6 +16,8 @@ public class CurrencyUtils {
     static {
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
         symbols.setGroupingSeparator(',');
+        
+        // Formatter for whole numbers (VND doesn't use decimals)
         VND_FORMATTER = new DecimalFormat("#,###", symbols);
     }
 
@@ -37,6 +39,7 @@ public class CurrencyUtils {
 
     /**
      * Format amount as VND without the "VND" suffix.
+     * VND doesn't use decimal places, so amounts are rounded to whole numbers.
      * 
      * @param amount Amount to format
      * @return Formatted string like "1,000,000"
@@ -45,8 +48,23 @@ public class CurrencyUtils {
         if (amount == null) {
             return "0";
         }
+        // Round to whole number (VND doesn't use decimals)
         long vndAmount = amount.longValue();
         return VND_FORMATTER.format(vndAmount);
+    }
+
+    /**
+     * Format amount as VND (Vietnamese Dong) from a Double.
+     * Convenience method for dashboard stats that use Double.
+     * 
+     * @param amount Amount to format (can be null)
+     * @return Formatted string like "1,000,000 VND"
+     */
+    public static String formatVND(Double amount) {
+        if (amount == null) {
+            return "0 VND";
+        }
+        return formatVND(BigDecimal.valueOf(amount));
     }
 }
 

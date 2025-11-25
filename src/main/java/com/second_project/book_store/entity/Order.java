@@ -46,8 +46,8 @@ public class Order {
 
     @Column(
         nullable = false,
-        precision = 10,
-        scale = 2
+        precision = 15,
+        scale = 0
     )
     @NotNull
     private BigDecimal totalAmount;

@@ -49,6 +49,7 @@ public class HomePageController {
             // Get user details from authentication
             if (authentication.getPrincipal() instanceof CustomUserDetails) {
                 CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+                model.addAttribute("userName", userDetails.getFullName());
                 model.addAttribute("userEmail", userDetails.getEmail());
                 model.addAttribute("userRole", userDetails.getRole().name());
                 model.addAttribute("isVerified", userDetails.isVerified());

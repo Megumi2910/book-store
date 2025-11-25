@@ -45,8 +45,8 @@ public class OrderItem {
 
     @Column(
         nullable = false,
-        precision = 10,
-        scale = 2
+        precision = 15,
+        scale = 0
     )
     @NotNull
     private BigDecimal priceAtPurchase;

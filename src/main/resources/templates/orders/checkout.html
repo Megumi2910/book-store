@@ -29,7 +29,7 @@
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            <span sec:authentication="principal.email">user@example.com</span>
+                            <span sec:authentication="principal.fullName">User Name</span>
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" th:href="@{/change-password}">Change Password</a></li>
@@ -66,7 +66,7 @@
                         <h5 class="card-title mb-4">Shipping Information</h5>
                         <form th:action="@{/orders/checkout}" method="post" th:object="${checkoutRequest}" id="checkoutForm">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                            <input type="hidden" name="selectedCartItemIds" id="selectedCartItemIds"/>
+                            <input type="hidden" th:field="*{selectedCartItemIds}" id="selectedCartItemIds"/>
                             
                             <div class="mb-3">
                                 <label for="shippingAddress" class="form-label">Shipping Address <span class="text-danger">*</span></label>
@@ -133,17 +133,17 @@
                                     <br>
                                     <small class="text-muted">Qty: <span th:text="${item.quantity}">1</span></small>
                                 </div>
-                                <small th:text="${#numbers.formatInteger(item.subtotal.longValue(), 1, 'COMMA')} + ' VND'">0 VND</small>
+                                <small th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(item.subtotal)}">0 VND</small>
                             </div>
                             <hr>
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Items (<span th:text="${cart.totalItems}">0</span>):</span>
-                                <span th:text="${#numbers.formatInteger(cart.totalAmount.longValue(), 1, 'COMMA')} + ' VND'">0 VND</span>
+                                <span th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(cart.totalAmount)}">0 VND</span>
                             </div>
                             <hr>
                             <div class="d-flex justify-content-between">
                                 <strong>Total:</strong>
-                                <strong class="h5 text-primary" th:text="${#numbers.formatInteger(cart.totalAmount.longValue(), 1, 'COMMA')} + ' VND'">0 VND</strong>
+                                <strong class="h5 text-primary" th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(cart.totalAmount)}">0 VND</strong>
                             </div>
                         </div>
                     </div>
@@ -157,15 +157,8 @@
     
     <!-- Checkout Script -->
     <script>
-        // On page load, get selected items from sessionStorage and populate hidden field
-        document.addEventListener('DOMContentLoaded', function() {
-            const selectedIds = sessionStorage.getItem('selectedCartItems');
-            if (selectedIds) {
-                document.getElementById('selectedCartItemIds').value = selectedIds;
-                // Clear sessionStorage after reading
-                sessionStorage.removeItem('selectedCartItems');
-            }
-        });
+        // Selected items are already populated from the server via Thymeleaf
+        // No need for sessionStorage anymore since we pass via query parameter
     </script>
 </body>
 </html>

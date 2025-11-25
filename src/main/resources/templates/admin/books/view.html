@@ -80,7 +80,7 @@
                                     <div class="row">
                                         <div class="col-6">
                                             <strong>Price:</strong>
-                                            <h4 class="text-primary mb-0" th:text="${#numbers.formatInteger(book.price.longValue(), 1, 'COMMA')} + ' VND'">0 VND</h4>
+                                            <h4 class="text-primary mb-0" th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(book.price)}">0 VND</h4>
                                         </div>
                                         <div class="col-6">
                                             <strong>Stock:</strong>

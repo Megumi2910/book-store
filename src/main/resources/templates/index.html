@@ -71,7 +71,7 @@
                     </li>
                     <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            <span th:text="${userEmail}">user@example.com</span>
+                            <span th:text="${userName}">User Name</span>
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" th:href="@{/change-password}">Change Password</a></li>
@@ -156,7 +156,7 @@
                         <div class="card-body">
                             <h6 class="card-title text-truncate" th:text="${book.title}">Book Title</h6>
                             <p class="text-muted small mb-2 text-truncate" th:text="${book.author}">Author</p>
-                            <p class="h6 text-primary mb-2" th:text="${#numbers.formatInteger(book.price.longValue(), 1, 'COMMA')} + ' VND'">0 VND</p>
+                            <p class="h6 text-primary mb-2" th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(book.price)}">0 VND</p>
                             <a th:href="@{/books/{id}(id=${book.bookId})}" class="btn btn-sm btn-primary w-100">
                                 View Details
                             </a>
@@ -196,7 +196,7 @@
                                 </small>
                             </p>
                             <div class="mt-auto">
-                                <p class="h5 text-primary mb-2" th:text="${#numbers.formatInteger(book.price.longValue(), 1, 'COMMA')} + ' VND'">0 VND</p>
+                                <p class="h5 text-primary mb-2" th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(book.price)}">0 VND</p>
                                 <a th:href="@{/books/{id}(id=${book.bookId})}" class="btn btn-primary w-100">
                                     View Details
                                 </a>

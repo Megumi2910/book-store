@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.second_project.book_store.entity.Order.OrderStatus;
+import com.second_project.book_store.entity.Payment;
 import com.second_project.book_store.entity.Payment.PaymentStatus;
 import com.second_project.book_store.model.OrderDto;
 import com.second_project.book_store.repository.PaymentRepository;
@@ -54,7 +56,7 @@ public class AdminPaymentController {
         logger.info("Admin listing payments - page: {}, size: {}, status: {}", page, size, status);
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<com.second_project.book_store.entity.Payment> paymentPage;
+        Page<Payment> paymentPage;
 
         if (status != null && !status.trim().isEmpty()) {
             try {
@@ -106,7 +108,7 @@ public class AdminPaymentController {
 
         try {
             // Update order status to DELIVERED, which will automatically mark COD payment as PAID
-            orderService.updateOrderStatus(orderId, com.second_project.book_store.entity.Order.OrderStatus.DELIVERED);
+            orderService.updateOrderStatus(orderId, OrderStatus.DELIVERED);
             redirectAttributes.addFlashAttribute("success", "Payment marked as paid");
         } catch (IllegalArgumentException e) {
             logger.warn("Failed to mark payment as paid: {}", e.getMessage());

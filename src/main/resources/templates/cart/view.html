@@ -29,7 +29,7 @@
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            <span sec:authentication="principal.email">user@example.com</span>
+                            <span sec:authentication="principal.fullName">User Name</span>
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" th:href="@{/change-password}">Change Password</a></li>
@@ -107,7 +107,7 @@
                                     <div class="flex-grow-1 ms-3">
                                         <h6 th:text="${item.bookTitle}">Book Title</h6>
                                         <p class="text-muted mb-2" th:text="${item.bookAuthor}">Author</p>
-                                        <p class="text-primary mb-2" th:text="${#numbers.formatInteger(item.bookPrice.longValue(), 1, 'COMMA')} + ' VND'">0 VND</p>
+                                        <p class="text-primary mb-2" th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(item.bookPrice)}">0 VND</p>
                                         
                                         <!-- Quantity Selector -->
                                         <div class="input-group" style="width: 150px;">
@@ -170,7 +170,7 @@
                                     <div class="flex-grow-1 ms-3">
                                         <h6 th:text="${item.bookTitle}">Book Title</h6>
                                         <p class="text-muted mb-2" th:text="${item.bookAuthor}">Author</p>
-                                        <p class="text-primary mb-2" th:text="${#numbers.formatInteger(item.bookPrice.longValue(), 1, 'COMMA')} + ' VND'">0 VND</p>
+                                        <p class="text-primary mb-2" th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(item.bookPrice)}">0 VND</p>
                                         
                                         <!-- Quantity Selector -->
                                         <div class="input-group" style="width: 150px;">
@@ -447,8 +447,9 @@
             }
         }
         
-        // Format number as VND
+        // Format number as VND (no decimals)
         function formatVND(amount) {
+            // Round to whole number (VND doesn't use decimals)
             return Math.round(amount).toLocaleString('en-US') + ' VND';
         }
         
@@ -507,10 +508,10 @@
                 return;
             }
             
-            // Store selected item IDs in sessionStorage and redirect
+            // Get selected item IDs and pass as query parameter
             const selectedIds = Array.from(checkboxes).map(cb => cb.value);
-            sessionStorage.setItem('selectedCartItems', JSON.stringify(selectedIds));
-            window.location.href = '/orders/checkout';
+            const selectedIdsParam = selectedIds.join(',');
+            window.location.href = '/orders/checkout?selectedItems=' + encodeURIComponent(selectedIdsParam);
         }
         
         // Initialize totals on page load

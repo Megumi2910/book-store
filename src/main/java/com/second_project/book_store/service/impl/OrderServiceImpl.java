@@ -2,6 +2,7 @@ package com.second_project.book_store.service.impl;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -76,14 +77,52 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public OrderDto createOrderFromCart(Long userId, CheckoutRequestDto checkoutRequest) {
         logger.info("Creating order from cart for user {}", userId);
+        logger.debug("Selected cart item IDs: {}", checkoutRequest.getSelectedCartItemIds());
 
         // Get user's cart
         Cart cart = cartRepository.findByUser_UserId(userId)
             .orElseThrow(() -> new IllegalArgumentException("Cart not found for user: " + userId));
 
-        if (cart.getCartItems() == null || cart.getCartItems().isEmpty()) {
+        List<CartItem> allCartItems = cart.getCartItems();
+        if (allCartItems == null || allCartItems.isEmpty()) {
             throw new IllegalArgumentException("Cart is empty");
         }
+        
+        logger.debug("Total cart items: {}", allCartItems.size());
+
+        // Filter cart items if selectedCartItemIds is provided
+        List<CartItem> cartItemsToProcess = new ArrayList<>(allCartItems);
+        if (checkoutRequest.getSelectedCartItemIds() != null && !checkoutRequest.getSelectedCartItemIds().trim().isEmpty()) {
+            String[] selectedIds = checkoutRequest.getSelectedCartItemIds().split(",");
+            List<Long> selectedIdList = new ArrayList<>();
+            for (String id : selectedIds) {
+                try {
+                    selectedIdList.add(Long.parseLong(id.trim()));
+                } catch (NumberFormatException e) {
+                    logger.warn("Invalid cart item ID in selectedCartItemIds: {}", id);
+                }
+            }
+            
+            if (!selectedIdList.isEmpty()) {
+                logger.debug("Filtering cart items. Selected IDs: {}", selectedIdList);
+                cartItemsToProcess = allCartItems.stream()
+                    .filter(item -> item != null && selectedIdList.contains(item.getCartItemId()))
+                    .collect(java.util.stream.Collectors.toList());
+                
+                logger.debug("Filtered cart items count: {}", cartItemsToProcess.size());
+                
+                if (cartItemsToProcess.isEmpty()) {
+                    throw new IllegalArgumentException("No valid items selected for checkout. Please ensure the selected items are still in your cart.");
+                }
+            }
+        }
+        
+        // Final check to ensure we have items to process
+        if (cartItemsToProcess == null || cartItemsToProcess.isEmpty()) {
+            throw new IllegalArgumentException("No items available for checkout");
+        }
+        
+        logger.debug("Processing {} cart items for checkout", cartItemsToProcess.size());
 
         // Validate payment method
         PaymentMethod paymentMethod;
@@ -95,7 +134,7 @@ public class OrderServiceImpl implements OrderService {
 
         // Validate stock and calculate total
         BigDecimal totalAmount = BigDecimal.ZERO;
-        for (CartItem cartItem : cart.getCartItems()) {
+        for (CartItem cartItem : cartItemsToProcess) {
             Book book = cartItem.getBook();
             BookDetail bookDetail = book.getBookDetail();
             
@@ -134,7 +173,7 @@ public class OrderServiceImpl implements OrderService {
         order.setShippingAddress(checkoutRequest.getShippingAddress());
 
         // Create order items and update stock
-        for (CartItem cartItem : cart.getCartItems()) {
+        for (CartItem cartItem : cartItemsToProcess) {
             Book book = cartItem.getBook();
             BookDetail bookDetail = book.getBookDetail();
 
@@ -350,4 +389,5 @@ public class OrderServiceImpl implements OrderService {
         );
     }
 }
+
 

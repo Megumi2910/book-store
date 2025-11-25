@@ -27,10 +27,10 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <p class="text-muted mb-1 small">Total Revenue</p>
-                                <h3 class="mb-0" th:text="${#numbers.formatInteger((stats.totalRevenue ?: 0).longValue(), 1, 'COMMA')} + ' VND'">0 VND</h3>
+                                <h3 class="mb-0" th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(stats.totalRevenue)}">0 VND</h3>
                             </div>
                             <div class="stats-icon bg-primary bg-opacity-10 text-primary">
-                                <i class="bi bi-currency-dollar"></i>
+                                <i class="bi bi-cash-coin"></i>
                             </div>
                         </div>
                     </div>
@@ -188,7 +188,7 @@
                                             <span th:text="${order.customerName}">Customer</span><br>
                                             <small class="text-muted" th:text="${order.customerEmail}">email</small>
                                         </td>
-                                        <td><strong th:text="${#numbers.formatInteger(order.totalAmount.longValue(), 1, 'COMMA')} + ' VND'">0 VND</strong></td>
+                                        <td><strong th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(order.totalAmount)}">0 VND</strong></td>
                                         <td>
                                             <span class="badge" 
                                                   th:classappend="${order.orderStatus == 'PENDING'} ? 'bg-warning text-dark' : 
@@ -303,7 +303,7 @@
                         data: {
                             labels: labels,
                             datasets: [{
-                                label: 'Revenue ($)',
+                                label: 'Revenue (VND)',
                                 data: revenueData,
                                 borderColor: 'rgb(59, 130, 246)',
                                 backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -321,7 +321,7 @@
                                 tooltip: {
                                     callbacks: {
                                         label: function(context) {
-                                            return 'Revenue: $' + context.parsed.y.toFixed(2);
+                                            return 'Revenue: ' + Math.round(context.parsed.y).toLocaleString('en-US') + ' VND';
                                         }
                                     }
                                 }
@@ -331,7 +331,7 @@
                                     beginAtZero: true,
                                     ticks: {
                                         callback: function(value) {
-                                            return '$' + value;
+                                            return Math.round(value).toLocaleString('en-US') + ' VND';
                                         }
                                     }
                                 }

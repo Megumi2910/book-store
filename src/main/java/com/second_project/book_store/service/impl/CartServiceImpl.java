@@ -111,12 +111,22 @@ public class CartServiceImpl implements CartService {
             .orElse(null);
 
         if (existingItem != null) {
-            // Update quantity
-            int newQuantity = existingItem.getQuantity() + quantity;
+            // Update quantity - check if adding this quantity would exceed stock
+            int currentCartQuantity = existingItem.getQuantity();
+            int newQuantity = currentCartQuantity + quantity;
+            
             if (newQuantity > availableStock) {
-                throw new IllegalArgumentException(
-                    String.format("Insufficient stock. Available: %d, Requested: %d", 
-                                 availableStock, newQuantity));
+                // Show what user requested, not the total
+                int maxCanAdd = availableStock - currentCartQuantity;
+                if (maxCanAdd <= 0) {
+                    throw new IllegalArgumentException(
+                        String.format("Insufficient stock. Available: %d, You already have %d in cart", 
+                                     availableStock, currentCartQuantity));
+                } else {
+                    throw new IllegalArgumentException(
+                        String.format("Insufficient stock. Available: %d, Requested: %d, You already have %d in cart (max you can add: %d)", 
+                                     availableStock, quantity, currentCartQuantity, maxCanAdd));
+                }
             }
             existingItem.setQuantity(newQuantity);
             cartItemRepository.save(existingItem);

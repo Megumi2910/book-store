@@ -29,9 +29,9 @@ public class BookDetail {
     
     @Column(
         nullable = false,
-        precision = 10,
-        scale = 2
-        )
+        precision = 15,
+        scale = 0
+    )
     private BigDecimal price;
     
     @Column(nullable = false)

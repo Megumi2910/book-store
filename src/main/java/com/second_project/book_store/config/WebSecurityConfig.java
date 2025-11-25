@@ -273,6 +273,14 @@ public class WebSecurityConfig {
                 .permitAll()
             )
             
+            // Session management - Allow multiple concurrent sessions
+            // By default, Spring Security allows multiple sessions per user
+            // No explicit configuration needed unless you want to limit sessions
+            // Note: To test with different users simultaneously, use:
+            // - Different browsers (Chrome, Firefox, Edge) - each has separate cookies
+            // - Incognito/Private mode for one user
+            // - Different browser profiles
+            
             // Security Headers - Protection against common web vulnerabilities
             .headers(headers -> headers
                 // Prevent clickjacking attacks by denying the page to be displayed in frames

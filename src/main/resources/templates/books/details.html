@@ -29,7 +29,7 @@
                     </li>
                     <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            <span sec:authentication="principal.email">user@example.com</span>
+                            <span sec:authentication="principal.fullName">User Name</span>
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" th:href="@{/change-password}">Change Password</a></li>
@@ -82,7 +82,7 @@
                 <p class="text-muted h5" th:text="${book.author}">Author</p>
                 
                 <div class="mt-3 mb-3">
-                    <span class="h3 text-primary" th:text="${#numbers.formatInteger(book.price.longValue(), 1, 'COMMA')} + ' VND'">0 VND</span>
+                    <span class="h3 text-primary" th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(book.price)}">0 VND</span>
                 </div>
 
                 <hr>
