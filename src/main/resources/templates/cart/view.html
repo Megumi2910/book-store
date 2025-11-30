@@ -53,10 +53,6 @@
         <h1 class="mb-4">🛒 Shopping Cart</h1>
 
         <!-- Success/Error Messages -->
-        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
-            <span th:text="${success}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
         <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
             <span th:text="${error}"></span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -111,28 +107,19 @@
                                         
                                         <!-- Quantity Selector -->
                                         <div class="input-group" style="width: 150px;">
-                                            <button class="btn btn-outline-secondary" type="button" 
-                                                    th:onmousedown="'startCartAutoChange(' + ${item.cartItemId} + ', -1)'"
-                                                    onmouseup="stopCartAutoChange()"
-                                                    onmouseleave="stopCartAutoChange()"
-                                                    th:onclick="'changeCartQuantity(' + ${item.cartItemId} + ', -1)'"
+                                            <button class="btn btn-outline-secondary cart-decrement-btn" type="button" 
+                                                    th:attr="data-item-id=${item.cartItemId}"
                                                     th:disabled="${item.quantity <= 1}">
                                                 <i class="bi bi-dash"></i>
                                             </button>
-                                            <input type="number" 
+                                            <input type="text" 
                                                    class="form-control text-center" 
                                                    th:id="'quantity-' + ${item.cartItemId}"
                                                    th:value="${item.quantity}" 
-                                                   min="1"
-                                                   th:max="${item.availableStock}"
-                                                   th:attr="data-max=${item.availableStock}, data-item-id=${item.cartItemId}"
-                                                   onchange="validateCartQuantity(this)"
-                                                   oninput="updateCartQuantityButtons(this)">
-                                            <button class="btn btn-outline-secondary" type="button" 
-                                                    th:onmousedown="'startCartAutoChange(' + ${item.cartItemId} + ', 1)'"
-                                                    onmouseup="stopCartAutoChange()"
-                                                    onmouseleave="stopCartAutoChange()"
-                                                    th:onclick="'changeCartQuantity(' + ${item.cartItemId} + ', 1)'"
+                                                   readonly
+                                                   th:attr="data-max=${item.availableStock}, data-item-id=${item.cartItemId}">
+                                            <button class="btn btn-outline-secondary cart-increment-btn" type="button" 
+                                                    th:attr="data-item-id=${item.cartItemId}"
                                                     th:disabled="${item.quantity >= item.availableStock}">
                                                 <i class="bi bi-plus"></i>
                                             </button>
@@ -174,28 +161,19 @@
                                         
                                         <!-- Quantity Selector -->
                                         <div class="input-group" style="width: 150px;">
-                                            <button class="btn btn-outline-secondary" type="button" 
-                                                    th:onmousedown="'startCartAutoChange(' + ${item.cartItemId} + ', -1)'"
-                                                    onmouseup="stopCartAutoChange()"
-                                                    onmouseleave="stopCartAutoChange()"
-                                                    th:onclick="'changeCartQuantity(' + ${item.cartItemId} + ', -1)'"
+                                            <button class="btn btn-outline-secondary cart-decrement-btn" type="button" 
+                                                    th:attr="data-item-id=${item.cartItemId}"
                                                     th:disabled="${item.quantity <= 1}">
                                                 <i class="bi bi-dash"></i>
                                             </button>
-                                            <input type="number" 
+                                            <input type="text" 
                                                    class="form-control text-center" 
                                                    th:id="'quantity-' + ${item.cartItemId}"
                                                    th:value="${item.quantity}" 
-                                                   min="1"
-                                                   th:max="${item.availableStock}"
-                                                   th:attr="data-max=${item.availableStock}, data-item-id=${item.cartItemId}"
-                                                   onchange="validateCartQuantity(this)"
-                                                   oninput="updateCartQuantityButtons(this)">
-                                            <button class="btn btn-outline-secondary" type="button" 
-                                                    th:onmousedown="'startCartAutoChange(' + ${item.cartItemId} + ', 1)'"
-                                                    onmouseup="stopCartAutoChange()"
-                                                    onmouseleave="stopCartAutoChange()"
-                                                    th:onclick="'changeCartQuantity(' + ${item.cartItemId} + ', 1)'"
+                                                   readonly
+                                                   th:attr="data-max=${item.availableStock}, data-item-id=${item.cartItemId}">
+                                            <button class="btn btn-outline-secondary cart-increment-btn" type="button" 
+                                                    th:attr="data-item-id=${item.cartItemId}"
                                                     th:disabled="${item.quantity >= item.availableStock}">
                                                 <i class="bi bi-plus"></i>
                                             </button>
@@ -261,6 +239,7 @@
     <!-- Cart Management Script -->
     <script>
         let cartAutoChangeInterval = null;
+        let cartAutoChangeTimeout = null;
         let cartAutoChangeCartItemId = null;
         let cartAutoChangeDelta = 0;
         
@@ -271,11 +250,11 @@
             cartAutoChangeCartItemId = cartItemId;
             cartAutoChangeDelta = delta;
             
-            // Initial change
+            // Immediate first change
             changeCartQuantity(cartItemId, delta);
             
-            // Set up interval for continuous change
-            setTimeout(() => {
+            // Set up interval for continuous change after 500ms delay
+            cartAutoChangeTimeout = setTimeout(() => {
                 cartAutoChangeInterval = setInterval(() => {
                     changeCartQuantity(cartAutoChangeCartItemId, cartAutoChangeDelta);
                 }, 100);
@@ -284,6 +263,10 @@
         
         // Stop auto increment/decrement for cart items
         function stopCartAutoChange() {
+            if (cartAutoChangeTimeout) {
+                clearTimeout(cartAutoChangeTimeout);
+                cartAutoChangeTimeout = null;
+            }
             if (cartAutoChangeInterval) {
                 clearInterval(cartAutoChangeInterval);
                 cartAutoChangeInterval = null;
@@ -292,43 +275,23 @@
             cartAutoChangeDelta = 0;
         }
         
-        // Validate manual quantity input for cart items
-        function validateCartQuantity(input) {
-            const cartItemId = input.getAttribute('data-item-id');
-            const maxQuantity = parseInt(input.getAttribute('data-max')) || 999999;
-            let currentQuantity = parseInt(input.value) || 1;
-            
-            // Ensure quantity is within valid range
-            if (currentQuantity < 1) {
-                currentQuantity = 1;
-            } else if (currentQuantity > maxQuantity) {
-                currentQuantity = maxQuantity;
-            }
-            
-            // Update if changed
-            if (parseInt(input.value) !== currentQuantity) {
-                input.value = currentQuantity;
-            }
-            
-            // Update cart quantity
-            changeCartQuantity(cartItemId, 0); // 0 means use input value directly
-        }
-        
         // Update button states for cart quantity
-        function updateCartQuantityButtons(input) {
-            const cartItemId = input.getAttribute('data-item-id');
-            const maxQuantity = parseInt(input.getAttribute('data-max')) || 999999;
-            const currentQuantity = parseInt(input.value) || 1;
+        function updateCartQuantityButtons(cartItemId) {
+            const quantityInput = document.getElementById('quantity-' + cartItemId);
+            if (!quantityInput) return;
             
-            const decrementBtn = document.querySelector(`button[onmousedown*="startCartAutoChange(${cartItemId}, -1)"]`);
-            const incrementBtn = document.querySelector(`button[onmousedown*="startCartAutoChange(${cartItemId}, 1)"]`);
+            const maxQuantity = parseInt(quantityInput.getAttribute('data-max')) || 999999;
+            const currentQuantity = parseInt(quantityInput.value) || 1;
             
-            if (decrementBtn) {
-                decrementBtn.disabled = (currentQuantity <= 1);
-            }
-            if (incrementBtn) {
-                incrementBtn.disabled = (currentQuantity >= maxQuantity);
-            }
+            const decrementBtns = document.querySelectorAll('.cart-decrement-btn[data-item-id="' + cartItemId + '"]');
+            const incrementBtns = document.querySelectorAll('.cart-increment-btn[data-item-id="' + cartItemId + '"]');
+            
+            decrementBtns.forEach(btn => {
+                btn.disabled = (currentQuantity <= 1);
+            });
+            incrementBtns.forEach(btn => {
+                btn.disabled = (currentQuantity >= maxQuantity);
+            });
         }
         
         // Update quantity for a cart item
@@ -339,10 +302,7 @@
             const maxQuantity = parseInt(quantityInput.getAttribute('data-max')) || 999999;
             let currentQuantity = parseInt(quantityInput.value) || 1;
             
-            // If delta is 0, use the input value directly (for manual input)
-            if (delta !== 0) {
-                currentQuantity += delta;
-            }
+            currentQuantity += delta;
             
             if (currentQuantity < 1) {
                 currentQuantity = 1;
@@ -354,9 +314,9 @@
             quantityInput.value = currentQuantity;
             
             // Update button states
-            updateCartQuantityButtons(quantityInput);
+            updateCartQuantityButtons(cartItemId);
             
-            // Update quantity via AJAX
+            // Update quantity via form submit
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = '/cart/update/' + cartItemId;
@@ -526,6 +486,54 @@
                 selectAllCheckbox.checked = true;
             }
             updateTotals();
+            
+            // Setup event listeners for quantity buttons
+            const decrementBtns = document.querySelectorAll('.cart-decrement-btn');
+            const incrementBtns = document.querySelectorAll('.cart-increment-btn');
+            
+            decrementBtns.forEach(btn => {
+                const itemId = btn.getAttribute('data-item-id');
+                
+                // Mouse events
+                btn.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    startCartAutoChange(itemId, -1);
+                });
+                btn.addEventListener('mouseup', stopCartAutoChange);
+                btn.addEventListener('mouseleave', stopCartAutoChange);
+                
+                // Touch events for mobile
+                btn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    startCartAutoChange(itemId, -1);
+                });
+                btn.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    stopCartAutoChange();
+                });
+            });
+            
+            incrementBtns.forEach(btn => {
+                const itemId = btn.getAttribute('data-item-id');
+                
+                // Mouse events
+                btn.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    startCartAutoChange(itemId, 1);
+                });
+                btn.addEventListener('mouseup', stopCartAutoChange);
+                btn.addEventListener('mouseleave', stopCartAutoChange);
+                
+                // Touch events for mobile
+                btn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    startCartAutoChange(itemId, 1);
+                });
+                btn.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    stopCartAutoChange();
+                });
+            });
         });
     </script>
 </body>

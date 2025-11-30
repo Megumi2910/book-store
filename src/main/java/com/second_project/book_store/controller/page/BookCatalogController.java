@@ -9,17 +9,27 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import jakarta.validation.Valid;
 
 import com.second_project.book_store.security.CustomUserDetails;
 
 import com.second_project.book_store.model.BookDto;
+import com.second_project.book_store.model.ReviewDto;
 import com.second_project.book_store.service.BookService;
 import com.second_project.book_store.service.CartService;
 import com.second_project.book_store.service.GenreService;
+import com.second_project.book_store.service.ReviewService;
+
+import java.util.Map;
 
 /**
  * Controller for public book catalog pages.
@@ -35,11 +45,14 @@ public class BookCatalogController {
     private final BookService bookService;
     private final GenreService genreService;
     private final CartService cartService;
+    private final ReviewService reviewService;
 
-    public BookCatalogController(BookService bookService, GenreService genreService, CartService cartService) {
+    public BookCatalogController(BookService bookService, GenreService genreService, 
+                                  CartService cartService, ReviewService reviewService) {
         this.bookService = bookService;
         this.genreService = genreService;
         this.cartService = cartService;
+        this.reviewService = reviewService;
     }
 
     /**
@@ -107,19 +120,46 @@ public class BookCatalogController {
      * Public access - no authentication required.
      */
     @GetMapping("/{id}")
-    public String viewBookDetails(@PathVariable Long id, Authentication authentication, Model model) {
+    public String viewBookDetails(@PathVariable Long id, 
+                                   @RequestParam(defaultValue = "0") int reviewPage,
+                                   Authentication authentication, 
+                                   Model model) {
         logger.debug("Viewing book details for ID: {}", id);
 
         try {
             BookDto book = bookService.getBookById(id);
             model.addAttribute("book", book);
 
+            Long currentUserId = null;
+
             // Add cart item count for authenticated users
             if (authentication != null && authentication.isAuthenticated()) {
                 CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+                currentUserId = userDetails.getUserId();
                 Integer cartItemCount = cartService.getCartItemCount(userDetails.getUserId());
                 model.addAttribute("cartItemCount", cartItemCount);
+                
+                // Check if user already reviewed this book
+                ReviewDto userReview = reviewService.getUserReviewForBook(currentUserId, id);
+                model.addAttribute("userReview", userReview);
+                model.addAttribute("hasReviewed", userReview != null);
             }
+
+            // Add review statistics
+            Double averageRating = reviewService.getAverageRating(id);
+            Long reviewCount = reviewService.getReviewCount(id);
+            Map<Integer, Long> ratingDistribution = reviewService.getRatingDistribution(id);
+
+            model.addAttribute("averageRating", averageRating);
+            model.addAttribute("reviewCount", reviewCount);
+            model.addAttribute("ratingDistribution", ratingDistribution);
+
+            // Add reviews with pagination (10 per page, sorted by most liked)
+            Pageable pageable = PageRequest.of(reviewPage, 10);
+            Page<ReviewDto> reviewsPage = reviewService.getReviewsByBookId(id, pageable, currentUserId);
+            
+            model.addAttribute("reviewsPage", reviewsPage);
+            model.addAttribute("currentReviewPage", reviewPage);
 
             return "books/details";
         } catch (IllegalArgumentException e) {
@@ -127,6 +167,155 @@ public class BookCatalogController {
             model.addAttribute("error", "Book not found");
             return "error";
         }
+    }
+
+    /**
+     * Submit a new review for a book.
+     * Requires authentication.
+     */
+    @PostMapping("/{id}/reviews/submit")
+    public String submitReview(@PathVariable Long id,
+                                @Valid @ModelAttribute ReviewDto reviewDto,
+                                BindingResult bindingResult,
+                                Authentication authentication,
+                                RedirectAttributes redirectAttributes) {
+        
+        if (authentication == null || !authentication.isAuthenticated()) {
+            redirectAttributes.addFlashAttribute("error", "You must be logged in to submit a review");
+            return "redirect:/login";
+        }
+
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        Long userId = userDetails.getUserId();
+
+        logger.debug("User {} submitting review for book {}", userId, id);
+
+        // Validation
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("error", "Please provide a valid rating (1-5 stars)");
+            return "redirect:/books/" + id + "#reviews";
+        }
+
+        try {
+            reviewDto.setBookId(id);
+            reviewService.createReview(reviewDto, userId);
+            redirectAttributes.addFlashAttribute("success", "Your review has been submitted successfully!");
+            logger.info("Review submitted successfully by user {} for book {}", userId, id);
+        } catch (IllegalArgumentException e) {
+            logger.warn("Review submission failed: {}", e.getMessage());
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error submitting review", e);
+            redirectAttributes.addFlashAttribute("error", "An error occurred while submitting your review");
+        }
+
+        return "redirect:/books/" + id + "#reviews";
+    }
+
+    /**
+     * Update an existing review.
+     * Requires authentication and ownership.
+     */
+    @PostMapping("/{bookId}/reviews/{reviewId}/update")
+    public String updateReview(@PathVariable Long bookId,
+                                @PathVariable Long reviewId,
+                                @Valid @ModelAttribute ReviewDto reviewDto,
+                                BindingResult bindingResult,
+                                Authentication authentication,
+                                RedirectAttributes redirectAttributes) {
+        
+        if (authentication == null || !authentication.isAuthenticated()) {
+            redirectAttributes.addFlashAttribute("error", "You must be logged in to update a review");
+            return "redirect:/login";
+        }
+
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        Long userId = userDetails.getUserId();
+
+        logger.debug("User {} updating review {} for book {}", userId, reviewId, bookId);
+
+        // Validation
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("error", "Please provide a valid rating (1-5 stars)");
+            return "redirect:/books/" + bookId + "#reviews";
+        }
+
+        try {
+            reviewDto.setBookId(bookId);
+            reviewService.updateReview(reviewId, reviewDto, userId);
+            redirectAttributes.addFlashAttribute("success", "Your review has been updated successfully!");
+            logger.info("Review {} updated successfully by user {}", reviewId, userId);
+        } catch (IllegalArgumentException e) {
+            logger.warn("Review update failed: {}", e.getMessage());
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error updating review", e);
+            redirectAttributes.addFlashAttribute("error", "An error occurred while updating your review");
+        }
+
+        return "redirect:/books/" + bookId + "#reviews";
+    }
+
+    /**
+     * Like a review.
+     * Requires authentication.
+     */
+    @PostMapping("/{bookId}/reviews/{reviewId}/like")
+    public String likeReview(@PathVariable Long bookId,
+                              @PathVariable Long reviewId,
+                              Authentication authentication,
+                              RedirectAttributes redirectAttributes) {
+        
+        if (authentication == null || !authentication.isAuthenticated()) {
+            redirectAttributes.addFlashAttribute("error", "You must be logged in to like a review");
+            return "redirect:/login";
+        }
+
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        Long userId = userDetails.getUserId();
+
+        logger.debug("User {} liking review {}", userId, reviewId);
+
+        try {
+            reviewService.likeReview(reviewId, userId);
+            logger.info("Review {} liked by user {}", reviewId, userId);
+        } catch (Exception e) {
+            logger.error("Error liking review", e);
+            redirectAttributes.addFlashAttribute("error", "An error occurred");
+        }
+
+        return "redirect:/books/" + bookId + "#review-" + reviewId;
+    }
+
+    /**
+     * Dislike a review.
+     * Requires authentication.
+     */
+    @PostMapping("/{bookId}/reviews/{reviewId}/dislike")
+    public String dislikeReview(@PathVariable Long bookId,
+                                  @PathVariable Long reviewId,
+                                  Authentication authentication,
+                                  RedirectAttributes redirectAttributes) {
+        
+        if (authentication == null || !authentication.isAuthenticated()) {
+            redirectAttributes.addFlashAttribute("error", "You must be logged in to dislike a review");
+            return "redirect:/login";
+        }
+
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        Long userId = userDetails.getUserId();
+
+        logger.debug("User {} disliking review {}", userId, reviewId);
+
+        try {
+            reviewService.dislikeReview(reviewId, userId);
+            logger.info("Review {} disliked by user {}", reviewId, userId);
+        } catch (Exception e) {
+            logger.error("Error disliking review", e);
+            redirectAttributes.addFlashAttribute("error", "An error occurred");
+        }
+
+        return "redirect:/books/" + bookId + "#review-" + reviewId;
     }
 }
 

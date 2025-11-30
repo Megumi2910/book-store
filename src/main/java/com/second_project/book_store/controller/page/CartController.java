@@ -101,7 +101,6 @@ public class CartController {
 
         try {
             cartService.updateCartItemQuantity(userId, cartItemId, quantity);
-            redirectAttributes.addFlashAttribute("success", "Cart updated successfully!");
         } catch (IllegalArgumentException e) {
             logger.warn("Failed to update cart: {}", e.getMessage());
             redirectAttributes.addFlashAttribute("error", e.getMessage());
