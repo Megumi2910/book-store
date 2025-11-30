@@ -18,13 +18,20 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotNull;
 
 @Entity
-@Table(indexes = {
-    @Index(name = "idx_user_email", columnList = "email")
-})
+@Table(
+    indexes = {
+        @Index(name = "idx_user_email", columnList = "email")
+    },
+    uniqueConstraints = {
+        @UniqueConstraint(name = "uk_user_phone_number", columnNames = "phone_number"),
+        @UniqueConstraint(name = "uk_user_email", columnNames = "email")
+    }
+)
 public class User {
 
     @Id
@@ -40,10 +47,12 @@ public class User {
     @Column(nullable = false)
     private String lastName;
     
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String email;
     
+    @Column(nullable = false)
     private String phoneNumber;
+
     private String address;
     
     @Column(nullable = false)

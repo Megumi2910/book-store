@@ -129,8 +129,7 @@
                     <p class="mb-0">Please <a th:href="@{/login}" class="alert-link">login</a> or <a th:href="@{/register}" class="alert-link">register</a> to add items to cart and place orders.</p>
                 </div>
                 <div class="alert alert-success" role="alert" sec:authorize="isAuthenticated()">
-                    <h4 class="alert-heading">Welcome back!</h4>
-                    <p class="mb-0">You are logged in as <strong th:text="${userEmail}">user@example.com</strong></p>
+                    <h4 class="alert-heading">Welcome back! <span class="mb-0"><strong th:text="${userName}">User Name</strong></span></h4>
                 </div>
             </div>
         </div>

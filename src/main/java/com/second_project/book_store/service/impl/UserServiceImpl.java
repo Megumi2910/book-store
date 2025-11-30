@@ -16,6 +16,7 @@ import com.second_project.book_store.entity.User.UserRole;
 import com.second_project.book_store.event.PasswordResetRequestEvent;
 import com.second_project.book_store.event.RegistrationCompleteEvent;
 import com.second_project.book_store.exception.InvalidPasswordException;
+import com.second_project.book_store.exception.PhoneNumberAlreadyExistedException;
 import com.second_project.book_store.exception.RateLimitException;
 import com.second_project.book_store.exception.ResetPasswordTokenNotFoundException;
 import com.second_project.book_store.exception.UserAlreadyEnabledException;
@@ -64,6 +65,10 @@ public class UserServiceImpl implements UserService{
         // Check if user with email already exists
         if (userRepository.findByEmailIgnoreCase(userDto.getEmail().trim()).isPresent()) {
             throw new UserAlreadyExistedException("User already exists with email: " + userDto.getEmail());
+        }
+
+        if (userRepository.findByPhoneNumber(userDto.getPhoneNumber()).isPresent()){
+            throw new PhoneNumberAlreadyExistedException("User already exists with phone number: " + userDto.getPhoneNumber());
         }
         
         User user = new User();

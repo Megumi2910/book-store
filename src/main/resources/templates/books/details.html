@@ -200,16 +200,16 @@
                                     </div>
                                 </div>
                                 <div class="d-grid gap-2">
-                                    <a th:href="@{/login(redirect=/books/{id}, id=${book.bookId})}" class="btn btn-primary btn-lg">
+                                    <a th:href="@{/login(redirect=${'/books/' + book.bookId})}" class="btn btn-primary btn-lg">
                                         <i class="bi bi-cart-plus me-2"></i>Login to Add to Cart
                                     </a>
-                                    <a th:href="@{/login(redirect=/books/{id}, id=${book.bookId})}" class="btn btn-success btn-lg">
+                                    <a th:href="@{/login(redirect=${'/books/' + book.bookId})}" class="btn btn-success btn-lg">
                                         <i class="bi bi-bag-check me-2"></i>Login to Buy Now
                                     </a>
                                 </div>
                                 <div class="alert alert-info mt-3 mb-0">
                                     <i class="bi bi-info-circle me-2"></i>
-                                    Please <a th:href="@{/login(redirect=/books/{id}, id=${book.bookId})}" class="alert-link">login</a> or <a th:href="@{/register}" class="alert-link">register</a> to purchase items.
+                                    Please <a th:href="@{/login(redirect=${'/books/' + book.bookId})}" class="alert-link">login</a> or <a th:href="@{/register}" class="alert-link">register</a> to purchase items.
                                 </div>
                             </div>
                             <div th:if="${book.quantity == null or book.quantity == 0}" class="text-center">

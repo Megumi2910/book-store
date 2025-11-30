@@ -35,10 +35,16 @@ spring:
       maximum-pool-size: 5
       minimum-idle: 2
       pool-name: BookStoreHikariCP
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true  # Allows Flyway to work on existing databases
+    baseline-version: 0  # Baseline version for existing databases
+    validate-on-migrate: true  # Validates migration checksums
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate  # Changed from 'update' to 'validate' - Flyway handles schema changes
     properties:
       hibernate:
         format_sql: true
@@ -107,6 +113,12 @@ spring:
     url: jdbc:mysql://localhost:3306/book_store-qa?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=GMT%2B7&characterEncoding=UTF-8
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+    validate-on-migrate: true
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
@@ -156,6 +168,12 @@ spring:
       maximum-pool-size: 10
       minimum-idle: 5
       pool-name: BookStoreHikariCP
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+    validate-on-migrate: true
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:

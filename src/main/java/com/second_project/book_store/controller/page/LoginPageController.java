@@ -3,6 +3,7 @@ package com.second_project.book_store.controller.page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 /**
  * Thymeleaf controller for login page.
@@ -36,7 +37,11 @@ public class LoginPageController {
      * @return Thymeleaf template name
      */
     @GetMapping("/login")
-    public String showLoginForm(String error, String logout, String redirect, Model model) {
+    public String showLoginForm(
+        @RequestParam(required = false) String error,
+        @RequestParam(required = false) String logout,
+        @RequestParam(required = false) String redirect,
+        Model model) {
         // Check for login error
         if (error != null) {
             model.addAttribute("error", "Invalid email or password. Please try again.");

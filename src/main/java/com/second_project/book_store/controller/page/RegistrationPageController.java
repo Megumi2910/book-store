@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.second_project.book_store.exception.PhoneNumberAlreadyExistedException;
+import com.second_project.book_store.exception.UserAlreadyExistedException;
 import com.second_project.book_store.model.UserDto;
 import com.second_project.book_store.service.UserService;
 
@@ -41,12 +43,28 @@ public class RegistrationPageController {
         if (bindingResult.hasErrors()){
             return "register";
         }
-
-        userService.registerUser(userDto);
         
-        redirectAttributes.addFlashAttribute("registration_successful", "User registered successfully. Please verify your account after logging in.");
+        try {
+            userService.registerUser(userDto);
+        
+            redirectAttributes.addFlashAttribute("registration_successful", "User registered successfully. Please verify your account after logging in.");
+            
+            return "redirect:/login";
 
-        return "redirect:/login";
+        } catch (UserAlreadyExistedException e) {
+
+            bindingResult.rejectValue("email", "error.email", e.getMessage());
+
+            return "register";
+            
+        } catch (PhoneNumberAlreadyExistedException e){
+
+            bindingResult.rejectValue("phoneNumber", "error.phoneNumber", e.getMessage());
+            
+            return "register";
+        }
+
+        
     }
     
 

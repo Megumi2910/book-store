@@ -62,6 +62,7 @@ public class WebSecurityConfig {
 
     private static final String[] PUBLIC_ENDPOINTS = {
         "/",
+        "/books/**",
         "/verify-registration",
         "/register",
         "/send-verify-email",
