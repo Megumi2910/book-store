@@ -322,6 +322,9 @@
                                     <div class="flex-grow-1">
                                         <div class="d-flex align-items-center gap-2 mb-1">
                                             <strong th:text="${review.userName}">User Name</strong>
+                                            <!-- Admin badge -->
+                                            <span th:if="${review.userRole != null and review.userRole.name() == 'ADMIN'}" 
+                                                  class="badge bg-danger">Admin</span>
                                             <!-- Badge for user's own review -->
                                             <span th:if="${review.canEdit}" class="badge bg-primary">Your Review</span>
                                         </div>

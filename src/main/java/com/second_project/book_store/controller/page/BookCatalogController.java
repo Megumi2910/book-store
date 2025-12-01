@@ -21,7 +21,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import jakarta.validation.Valid;
 
 import com.second_project.book_store.security.CustomUserDetails;
-
+import com.second_project.book_store.entity.User.UserRole;
 import com.second_project.book_store.model.BookDto;
 import com.second_project.book_store.model.ReviewDto;
 import com.second_project.book_store.service.BookService;
@@ -143,6 +143,9 @@ public class BookCatalogController {
                 ReviewDto userReview = reviewService.getUserReviewForBook(currentUserId, id);
                 model.addAttribute("userReview", userReview);
                 model.addAttribute("hasReviewed", userReview != null);
+                
+                model.addAttribute("userRole", userReview.getUserRole());
+                
             }
 
             // Add review statistics

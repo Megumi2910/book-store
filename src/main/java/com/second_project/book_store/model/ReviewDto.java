@@ -2,6 +2,8 @@ package com.second_project.book_store.model;
 
 import java.time.LocalDateTime;
 
+import com.second_project.book_store.entity.User.UserRole;
+
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -26,6 +28,7 @@ public class ReviewDto {
     private Long userId;
     private String userName; // Full name of the reviewer
     private String userEmail;
+    private UserRole userRole;
 
     private Long bookId;
     private String bookTitle;
@@ -46,13 +49,14 @@ public class ReviewDto {
 
     public ReviewDto() {}
 
-    public ReviewDto(Long reviewId, Integer rating, String comment, Long userId, String userName,
+    public ReviewDto(Long reviewId, Integer rating, String comment, Long userId, String userName, UserRole userRole,
                      Long bookId, String bookTitle, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.reviewId = reviewId;
         this.rating = rating;
         this.comment = comment;
         this.userId = userId;
         this.userName = userName;
+        this.userRole = userRole;
         this.bookId = bookId;
         this.bookTitle = bookTitle;
         this.createdAt = createdAt;
@@ -107,6 +111,14 @@ public class ReviewDto {
 
     public void setUserEmail(String userEmail) {
         this.userEmail = userEmail;
+    }
+
+    public UserRole getUserRole() {
+        return userRole;
+    }
+
+    public void setUserRole(UserRole userRole) {
+        this.userRole = userRole;
     }
 
     public Long getBookId() {
@@ -183,7 +195,7 @@ public class ReviewDto {
 
     @Override
     public String toString() {
-        return "ReviewDto [reviewId=" + reviewId + ", rating=" + rating + ", userName=" + userName
+        return "ReviewDto [reviewId=" + reviewId + ", rating=" + rating + ", userName=" + userName + ", userRole=" + userRole
                 + ", bookTitle=" + bookTitle + ", createdAt=" + createdAt + ", likeCount=" + likeCount
                 + ", dislikeCount=" + dislikeCount + "]";
     }
