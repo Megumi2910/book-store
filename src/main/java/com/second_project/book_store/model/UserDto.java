@@ -43,9 +43,9 @@ public class UserDto {
 
     /**
      * Optional field - User address.
-     * If provided, must be between 10 and 500 characters.
+     * If provided, must not exceed 500 characters.
      */
-    @Size(min = 10, max = 500, message = "Address must be between 10 and 500 characters")
+    @Size(max = 500, message = "Address must not exceed 500 characters")
     private String address;
 
     @NotBlank(message = "Password is required")

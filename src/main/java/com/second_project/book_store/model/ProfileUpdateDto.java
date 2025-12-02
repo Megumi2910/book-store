@@ -39,7 +39,7 @@ public class ProfileUpdateDto {
      * Optional field - User address.
      * If provided, must be between 10 and 500 characters.
      */
-    @Size(min = 10, max = 500, message = "Address must be between 10 and 500 characters")
+    @Size(max = 500, message = "Address must not exceed 500 characters")
     private String address;
 
     // Constructors
