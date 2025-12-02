@@ -144,5 +144,13 @@ public interface ReviewService {
      * @return Dislike count
      */
     Integer getDislikeCount(Long reviewId);
+
+    /**
+     * Count total reviews for a user.
+     * 
+     * @param userId User ID
+     * @return Total review count
+     */
+    Long countUserReviews(Long userId);
 }
 

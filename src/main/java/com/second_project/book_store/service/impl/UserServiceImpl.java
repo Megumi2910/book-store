@@ -23,6 +23,7 @@ import com.second_project.book_store.exception.UserAlreadyEnabledException;
 import com.second_project.book_store.exception.UserAlreadyExistedException;
 import com.second_project.book_store.exception.UserNotFoundException;
 import com.second_project.book_store.model.ChangePasswordRequestDto;
+import com.second_project.book_store.model.ProfileUpdateDto;
 import com.second_project.book_store.model.ResetPasswordRequestDto;
 import com.second_project.book_store.model.UserDto;
 import com.second_project.book_store.repository.ResetPasswordTokenRepository;
@@ -193,5 +194,39 @@ public class UserServiceImpl implements UserService{
     public User findUserByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
+    }
+
+    @Override
+    @Transactional
+    public User updateProfile(Long userId, ProfileUpdateDto profileUpdateDto) {
+        // Find user
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
+        
+        // Check if phone number is being changed and if it's already taken by another user
+        String newPhoneNumber = profileUpdateDto.getPhoneNumber();
+        if (newPhoneNumber != null && !newPhoneNumber.equals(user.getPhoneNumber())) {
+            userRepository.findByPhoneNumber(newPhoneNumber)
+                    .ifPresent(existingUser -> {
+                        if (!existingUser.getUserId().equals(userId)) {
+                            throw new PhoneNumberAlreadyExistedException(
+                                "Phone number is already registered to another account");
+                        }
+                    });
+        }
+        
+        // Update profile fields
+        user.setFirstName(profileUpdateDto.getFirstName());
+        user.setLastName(profileUpdateDto.getLastName());
+        user.setPhoneNumber(profileUpdateDto.getPhoneNumber());
+        user.setAddress(profileUpdateDto.getAddress());
+        
+        return userRepository.save(user);
+    }
+
+    @Override
+    public User findUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
     }
 }

@@ -71,6 +71,14 @@ public class UserDto {
         this.matchingPassword = matchingPassword;
     }
 
+    public UserDto(String firstName, String lastName, String email, String phoneNumber, String address) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        this.address = address;
+    }
+
     // Getters and Setters
     public String getFirstName() {
         return firstName;

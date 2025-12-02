@@ -344,5 +344,11 @@ public class ReviewServiceImpl implements ReviewService {
 
         return dto;
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Long countUserReviews(Long userId) {
+        return reviewRepository.countByUser_UserId(userId);
+    }
 }
 

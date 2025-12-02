@@ -79,5 +79,13 @@ public interface OrderService {
      * @throws IllegalArgumentException if order not found, not owned by user, or cannot be cancelled
      */
     OrderDto cancelOrder(Long orderId, Long userId);
+
+    /**
+     * Count total orders for a user.
+     * 
+     * @param userId User ID
+     * @return Total order count
+     */
+    Long countUserOrders(Long userId);
 }
 

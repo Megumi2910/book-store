@@ -36,10 +36,19 @@ public class CartController {
 
     /**
      * View shopping cart.
+     * Requires verified account.
      */
     @GetMapping
-    public String viewCart(Authentication authentication, Model model) {
+    public String viewCart(Authentication authentication, Model model, RedirectAttributes redirectAttributes) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        
+        // Check if user is verified
+        if (!userDetails.isVerified()) {
+            redirectAttributes.addFlashAttribute("error", 
+                "Please verify your email to access your shopping cart. Check your inbox for the verification link.");
+            return "redirect:/profile";
+        }
+        
         Long userId = userDetails.getUserId();
 
         logger.debug("Viewing cart for user {}", userId);
@@ -52,7 +61,7 @@ public class CartController {
 
     /**
      * Add book to cart.
-     * Requires authentication - redirects to login if not authenticated.
+     * Requires authentication and verified account.
      */
     @PostMapping("/add")
     public String addToCart(
@@ -68,6 +77,14 @@ public class CartController {
         }
 
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        
+        // Check if user is verified
+        if (!userDetails.isVerified()) {
+            redirectAttributes.addFlashAttribute("error", 
+                "Please verify your email before adding items to cart. Check your inbox for the verification link.");
+            return "redirect:/books/" + bookId;
+        }
+        
         Long userId = userDetails.getUserId();
 
         logger.info("Adding book {} to cart for user {}", bookId, userId);
@@ -136,7 +153,7 @@ public class CartController {
 
     /**
      * Buy Now - Add book to cart and redirect to checkout.
-     * Requires authentication - redirects to login if not authenticated.
+     * Requires authentication and verified account.
      */
     @PostMapping("/buy-now")
     public String buyNow(
@@ -152,6 +169,14 @@ public class CartController {
         }
 
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        
+        // Check if user is verified
+        if (!userDetails.isVerified()) {
+            redirectAttributes.addFlashAttribute("error", 
+                "Please verify your email before making purchases. Check your inbox for the verification link.");
+            return "redirect:/books/" + bookId;
+        }
+        
         Long userId = userDetails.getUserId();
 
         logger.info("Buy Now - Adding book {} to cart for user {} and redirecting to checkout", bookId, userId);

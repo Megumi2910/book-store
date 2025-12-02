@@ -69,6 +69,14 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Long countByOrderStatus(OrderStatus status);
 
     /**
+     * Count orders by user ID.
+     * 
+     * @param userId User ID
+     * @return Count of user's orders
+     */
+    Long countByUser_UserId(Long userId);
+
+    /**
      * Count orders created today.
      * 
      * @param startOfDay Start of today

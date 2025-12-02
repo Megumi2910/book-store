@@ -80,6 +80,14 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Long countByBook_BookId(Long bookId);
 
     /**
+     * Count reviews by user ID.
+     * 
+     * @param userId User ID
+     * @return Number of user's reviews
+     */
+    Long countByUser_UserId(Long userId);
+
+    /**
      * Check if user has already reviewed a book.
      * 
      * @param userId User ID

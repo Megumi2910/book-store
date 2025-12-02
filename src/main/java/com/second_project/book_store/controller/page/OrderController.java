@@ -54,13 +54,23 @@ public class OrderController {
 
     /**
      * Show checkout page.
+     * Requires verified account.
      */
     @GetMapping("/checkout")
     public String showCheckout(
             @RequestParam(required = false) String selectedItems,
             Authentication authentication, 
-            Model model) {
+            Model model,
+            RedirectAttributes redirectAttributes) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        
+        // Check if user is verified
+        if (!userDetails.isVerified()) {
+            redirectAttributes.addFlashAttribute("error", 
+                "Please verify your email before checkout. Check your inbox for the verification link.");
+            return "redirect:/profile";
+        }
+        
         Long userId = userDetails.getUserId();
 
         logger.debug("Showing checkout page for user {}", userId);
@@ -118,6 +128,7 @@ public class OrderController {
 
     /**
      * Process checkout and create order.
+     * Requires verified account.
      */
     @PostMapping("/checkout")
     public String processCheckout(
@@ -128,6 +139,14 @@ public class OrderController {
             RedirectAttributes redirectAttributes) {
 
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        
+        // Check if user is verified
+        if (!userDetails.isVerified()) {
+            redirectAttributes.addFlashAttribute("error", 
+                "Please verify your email before placing orders. Check your inbox for the verification link.");
+            return "redirect:/profile";
+        }
+        
         Long userId = userDetails.getUserId();
 
         logger.info("Processing checkout for user {}", userId);
@@ -192,14 +211,24 @@ public class OrderController {
 
     /**
      * View order history.
+     * Requires verified account.
      */
     @GetMapping
     public String viewOrderHistory(
             @RequestParam(defaultValue = "0") int page,
             Authentication authentication,
-            Model model) {
+            Model model,
+            RedirectAttributes redirectAttributes) {
 
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        
+        // Check if user is verified
+        if (!userDetails.isVerified()) {
+            redirectAttributes.addFlashAttribute("error", 
+                "Please verify your email to view your order history. Check your inbox for the verification link.");
+            return "redirect:/profile";
+        }
+        
         Long userId = userDetails.getUserId();
 
         logger.debug("Viewing order history for user {}", userId);

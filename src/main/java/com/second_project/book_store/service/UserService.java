@@ -2,6 +2,7 @@ package com.second_project.book_store.service;
 
 import com.second_project.book_store.entity.User;
 import com.second_project.book_store.model.ChangePasswordRequestDto;
+import com.second_project.book_store.model.ProfileUpdateDto;
 import com.second_project.book_store.model.ResetPasswordRequestDto;
 import com.second_project.book_store.model.UserDto;
 
@@ -67,4 +68,25 @@ public interface UserService {
      * @throws UserNotFoundException if user not found
      */
     User findUserByEmail(String email);
+
+    /**
+     * Updates the user's profile information.
+     * Email cannot be changed as it's used for authentication.
+     * 
+     * @param userId The ID of the user to update
+     * @param profileUpdateDto Contains the updated profile information
+     * @return The updated User entity
+     * @throws UserNotFoundException if user not found
+     * @throws PhoneNumberAlreadyExistedException if phone number is taken by another user
+     */
+    User updateProfile(Long userId, ProfileUpdateDto profileUpdateDto);
+
+    /**
+     * Finds a user by ID.
+     * 
+     * @param userId The user's ID
+     * @return The User entity
+     * @throws UserNotFoundException if user not found
+     */
+    User findUserById(Long userId);
 }

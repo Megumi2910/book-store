@@ -388,6 +388,11 @@ public class OrderServiceImpl implements OrderService {
             orderItem.getPriceAtPurchase()
         );
     }
+
+    @Override
+    public Long countUserOrders(Long userId) {
+        return orderRepository.countByUser_UserId(userId);
+    }
 }
 
 
