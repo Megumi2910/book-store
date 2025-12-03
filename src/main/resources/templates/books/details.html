@@ -47,7 +47,22 @@
             </div>
         </div>
     </nav>
-
+    <!-- Verification Warning Banner -->
+    <div sec:authorize="isAuthenticated()"
+         class="alert alert-warning alert-dismissible fade show m-0 border-0 rounded-0 text-center" 
+         role="alert" 
+         th:if="${isVerified != null and !isVerified}"
+         >
+        <div class="container">
+            <strong><i class="bi bi-exclamation-triangle me-2"></i>Account Not Verified</strong>
+            <span class="mx-2">|</span>
+            <span>Please verify your email to access shopping features (cart, orders, checkout).</span>
+            <span class="mx-2">|</span>
+            <a th:href="@{/send-verify-email}" class="alert-link fw-bold text-decoration-underline">
+                Send Verification Email
+            </a>
+        </div>
+    </div>
     <!-- Main Content -->
     <div class="container mt-4" th:if="${book != null}">
         <!-- Success/Error Messages -->
@@ -124,8 +139,9 @@
                 <!-- Add to Cart Form -->
                 <div class="card bg-light">
                     <div class="card-body">
-                        <!-- Authenticated Users -->
-                        <div sec:authorize="isAuthenticated()">
+                        <!-- Authenticated Verified Users -->
+                        <div sec:authorize="isAuthenticated()"
+                             th:if="${isVerified != null and isVerified}">
                             <div th:if="${book.quantity != null and book.quantity > 0}">
                                 <form id="addToCartForm" th:action="@{/cart/add}" method="post">
                                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
@@ -172,7 +188,40 @@
                                 </button>
                             </div>
                         </div>
-
+                        <!-- Unverified Users -->
+                        <div sec:authorize="isAuthenticated()"
+                             th:if="${isVerified != null and !isVerified}">
+                            <div th:if="${book.quantity != null and book.quantity > 0}">
+                                <div class="mb-3">
+                                    <label class="form-label">Quantity</label>
+                                    <div class="input-group" style="max-width: 200px;">
+                                        <button class="btn btn-outline-secondary" type="button" disabled>
+                                            <i class="bi bi-dash"></i>
+                                        </button>
+                                        <input type="text" class="form-control text-center" value="1" readonly>
+                                        <button class="btn btn-outline-secondary" type="button" disabled>
+                                            <i class="bi bi-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+                                    <b>Please verify your Account first before proceeding</b>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <button type="button" class="btn btn-primary btn-lg">
+                                        <i class="bi bi-cart-plus me-2"></i>Add to Cart
+                                    </button>
+                                    <button type="button" class="btn btn-success btn-lg">
+                                        <i class="bi bi-bag-check me-2"></i>Buy Now
+                                    </button>
+                                </div>
+                            </div>
+                            <div th:if="${book.quantity == null or book.quantity == 0}" class="text-center">
+                                <button class="btn btn-secondary btn-lg" disabled>
+                                    <i class="bi bi-x-circle me-2"></i>Out of Stock
+                                </button>
+                            </div>
+                        </div>
                         <!-- Guest Users -->
                         <div sec:authorize="!isAuthenticated()">
                             <div th:if="${book.quantity != null and book.quantity > 0}">
@@ -259,9 +308,10 @@
                     </div>
                 </div>
 
-                <!-- Write a Review Section (only if user hasn't reviewed) -->
-                <div sec:authorize="isAuthenticated()">
-                    <div th:if="${!hasReviewed}" class="card mb-4">
+                <!-- Write a Review Section (only for verified users who haven't reviewed) -->
+                <div sec:authorize="isAuthenticated()"
+                     th:if="${isVerified != null and isVerified and hasReviewed != null and !hasReviewed}">
+                    <div class="card mb-4">
                         <div class="card-header bg-primary text-white">
                             <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Write a Review</h5>
                         </div>
@@ -294,6 +344,13 @@
                     </div>
                 </div>
 
+                <!-- Unverified User Message -->
+                <div sec:authorize="isAuthenticated()"
+                     class="alert alert-info mb-4"
+                     th:if="${isVerified != null and !isVerified}">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Please verify your Account to write a Review
+                </div>
                 <!-- Guest User Message -->
                 <div sec:authorize="!isAuthenticated()" class="alert alert-info mb-4">
                     <i class="bi bi-info-circle me-2"></i>
@@ -365,8 +422,10 @@
                                 <p th:if="${review.comment == null or review.comment.isEmpty()}" 
                                    class="mb-2 text-muted fst-italic">No written review</p>
                                 <div class="d-flex align-items-center gap-2">
-                                    <!-- Like/Dislike Buttons for Authenticated Users -->
-                                    <div sec:authorize="isAuthenticated()" class="d-flex gap-2">
+                                    <!-- Like/Dislike Buttons for Authenticated Verified Users -->
+                                    <div sec:authorize="isAuthenticated()"
+                                         class="d-flex gap-2"
+                                         th:if="${isVerified != null and isVerified}">
                                         <form th:action="@{/books/{bookId}/reviews/{reviewId}/like(bookId=${book.bookId}, reviewId=${review.reviewId})}" 
                                               method="post" class="d-inline">
                                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
@@ -386,8 +445,14 @@
                                             </button>
                                         </form>
                                     </div>
-                                    <!-- Guest users see counts only -->
+                                    <!-- Guest and Unverified users see counts only -->
                                     <div sec:authorize="!isAuthenticated()">
+                                        <span class="text-muted">
+                                            <i class="bi bi-hand-thumbs-up"></i> <span th:text="${review.likeCount}">0</span>
+                                            <i class="bi bi-hand-thumbs-down ms-2"></i> <span th:text="${review.dislikeCount}">0</span>
+                                        </span>
+                                    </div>
+                                    <div sec:authorize="isAuthenticated()" th:if="${isVerified != null and !isVerified}">
                                         <span class="text-muted">
                                             <i class="bi bi-hand-thumbs-up"></i> <span th:text="${review.likeCount}">0</span>
                                             <i class="bi bi-hand-thumbs-down ms-2"></i> <span th:text="${review.dislikeCount}">0</span>

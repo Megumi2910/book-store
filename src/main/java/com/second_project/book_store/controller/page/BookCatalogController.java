@@ -1,5 +1,7 @@
 package com.second_project.book_store.controller.page;
 
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -18,18 +20,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import jakarta.validation.Valid;
-
-import com.second_project.book_store.security.CustomUserDetails;
-import com.second_project.book_store.entity.User.UserRole;
 import com.second_project.book_store.model.BookDto;
 import com.second_project.book_store.model.ReviewDto;
+import com.second_project.book_store.security.CustomUserDetails;
 import com.second_project.book_store.service.BookService;
 import com.second_project.book_store.service.CartService;
 import com.second_project.book_store.service.GenreService;
 import com.second_project.book_store.service.ReviewService;
 
-import java.util.Map;
+import jakarta.validation.Valid;
 
 /**
  * Controller for public book catalog pages.
@@ -110,6 +109,7 @@ public class BookCatalogController {
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
             Integer cartItemCount = cartService.getCartItemCount(userDetails.getUserId());
             model.addAttribute("cartItemCount", cartItemCount);
+            model.addAttribute("isVerified", userDetails.isVerified());
         }
 
         return "books/catalog";
@@ -131,22 +131,38 @@ public class BookCatalogController {
             model.addAttribute("book", book);
 
             Long currentUserId = null;
+            boolean hasReviewed = false;
+            ReviewDto userReview = null;
 
             // Add cart item count for authenticated users
             if (authentication != null && authentication.isAuthenticated()) {
                 CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-                currentUserId = userDetails.getUserId();
-                Integer cartItemCount = cartService.getCartItemCount(userDetails.getUserId());
-                model.addAttribute("cartItemCount", cartItemCount);
+                // Check if user is verified or not
+                boolean isVerified = userDetails.isVerified();
+                model.addAttribute("isVerified", isVerified);
                 
-                // Check if user already reviewed this book
-                ReviewDto userReview = reviewService.getUserReviewForBook(currentUserId, id);
-                model.addAttribute("userReview", userReview);
-                model.addAttribute("hasReviewed", userReview != null);
-                
-                model.addAttribute("userRole", userReview.getUserRole());
-                
+                if (isVerified) {
+                    currentUserId = userDetails.getUserId();
+                    Integer cartItemCount = cartService.getCartItemCount(userDetails.getUserId());
+                    model.addAttribute("cartItemCount", cartItemCount);
+                    
+                    // Check if user already reviewed this book
+                    userReview = reviewService.getUserReviewForBook(currentUserId, id);
+                    hasReviewed = (userReview != null);
+                    model.addAttribute("userReview", userReview);
+                    
+                    // Only set userRole if userReview exists to avoid NPE
+                    if (userReview != null) {
+                        model.addAttribute("userRole", userReview.getUserRole());
+                    }
+                }
+            } else {
+                // For guest users, explicitly set isVerified to false
+                model.addAttribute("isVerified", false);
             }
+            
+            // Always set hasReviewed to prevent null SpEL errors in template
+            model.addAttribute("hasReviewed", hasReviewed);
 
             // Add review statistics
             Double averageRating = reviewService.getAverageRating(id);

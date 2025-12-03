@@ -94,7 +94,7 @@
     <div class="alert alert-warning alert-dismissible fade show m-0 border-0 rounded-0 text-center" 
          role="alert" 
          sec:authorize="isAuthenticated()"
-         th:if="${isAuthenticated and !isVerified}">
+         th:if="${isAuthenticated and isVerified != null and !isVerified}">
         <div class="container">
             <strong>⚠️ Account Not Verified</strong>
             <span class="mx-2">|</span>
