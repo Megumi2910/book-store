@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -228,5 +230,44 @@ public class UserServiceImpl implements UserService{
     public User findUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
+    }
+
+    @Override
+    public Page<User> getUsers(Pageable pageable, String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return userRepository.findAll(pageable);
+        }
+
+        String trimmed = keyword.trim();
+        return userRepository
+                .findByEmailContainingIgnoreCaseOrFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(
+                        trimmed, trimmed, trimmed, pageable);
+    }
+
+    @Override
+    public void updateUserRole(Long userId, UserRole role) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
+
+        // If demoting an ADMIN to another role, ensure at least one ADMIN remains
+        if (user.getRole() == UserRole.ADMIN && role != UserRole.ADMIN) {
+            long adminCount = userRepository.countByRole(UserRole.ADMIN);
+            if (adminCount <= 1) {
+                throw new IllegalStateException("At least one ADMIN user must exist in the system. "
+                        + "Create another admin before changing this user's role.");
+            }
+        }
+
+        user.setRole(role);
+        userRepository.save(user);
+    }
+
+    @Override
+    public void toggleUserEnabled(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
+
+        user.setEnabled(!user.isEnabled());
+        userRepository.save(user);
     }
 }

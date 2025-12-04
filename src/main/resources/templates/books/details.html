@@ -308,9 +308,9 @@
                     </div>
                 </div>
 
-                <!-- Write a Review Section (only for verified users who haven't reviewed) -->
+                <!-- Write a Review Section (only for verified users who purchased the book and haven't reviewed) -->
                 <div sec:authorize="isAuthenticated()"
-                     th:if="${isVerified != null and isVerified and hasReviewed != null and !hasReviewed}">
+                     th:if="${isVerified != null and isVerified and purchased and hasReviewed != null and !hasReviewed}">
                     <div class="card mb-4">
                         <div class="card-header bg-primary text-white">
                             <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Write a Review</h5>

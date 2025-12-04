@@ -107,6 +107,21 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                                         @Param("endDate") LocalDateTime endDate);
 
     /**
+     * Count delivered orders within a date range.
+     * Used for admin reports to compute average order value for the selected
+     * period only.
+     *
+     * @param startDate Start date-time (inclusive)
+     * @param endDate   End date-time (inclusive)
+     * @return Number of delivered orders in the date range
+     */
+    @Query("SELECT COUNT(o) FROM Order o " +
+           "WHERE o.orderStatus = 'DELIVERED' " +
+           "AND o.orderDate >= :startDate AND o.orderDate <= :endDate")
+    long countDeliveredOrdersByDateRange(@Param("startDate") LocalDateTime startDate,
+                                         @Param("endDate") LocalDateTime endDate);
+
+    /**
      * Get order count by status (for pie chart).
      * Returns array of [status, count].
      * 

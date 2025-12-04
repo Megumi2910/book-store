@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{admin/layout/base}">
+<head>
+    <title>Reports</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">📊 Reports &amp; Analytics</h2>
+            <p class="text-muted mb-0">Sales performance for a selected date range</p>
+        </div>
+    </div>
+
+    <!-- Date Range Filter -->
+    <form class="row g-3 mb-4" method="get" th:action="@{/admin/reports}">
+        <div class="col-md-3">
+            <label class="form-label small text-muted mb-1">Start Date</label>
+            <input type="date" class="form-control" name="start"
+                   th:value="${startDate}">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small text-muted mb-1">End Date</label>
+            <input type="date" class="form-control" name="end"
+                   th:value="${endDate}">
+        </div>
+        <div class="col-md-3 align-self-end">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-arrow-repeat me-1"></i>
+                Refresh
+            </button>
+        </div>
+    </form>
+
+    <!-- Summary Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card stats-card border-start border-primary border-4">
+                <div class="card-body">
+                    <p class="text-muted mb-1 small">Total Revenue</p>
+                    <h3 class="mb-0"
+                        th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(report.totalRevenue)}">
+                        0 VND
+                    </h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stats-card border-start border-success border-4">
+                <div class="card-body">
+                    <p class="text-muted mb-1 small">Total Orders</p>
+                    <h3 class="mb-0" th:text="${report.totalOrders}">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stats-card border-start border-info border-4">
+                <div class="card-body">
+                    <p class="text-muted mb-1 small">Average Order Value</p>
+                    <h3 class="mb-0"
+                        th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(report.averageOrderValue)}">
+                        0 VND
+                    </h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Books Row -->
+    <div class="row g-4">
+        <!-- Top by Revenue -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Top Books by Revenue</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Book</th>
+                                <th>Quantity</th>
+                                <th>Revenue</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="book : ${report.topBooksByRevenue}">
+                                <td th:text="${book.title}">Book Title</td>
+                                <td th:text="${book.quantitySold}">0</td>
+                                <td th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(book.revenue)}">
+                                    0 VND
+                                </td>
+                            </tr>
+                            <tr th:if="${report.topBooksByRevenue == null or #lists.isEmpty(report.topBooksByRevenue)}">
+                                <td colspan="3" class="text-center text-muted py-4">
+                                    <i class="bi bi-bar-chart fs-2 d-block mb-2"></i>
+                                    No data for selected period
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top by Quantity -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Top Books by Quantity Sold</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Book</th>
+                                <th>Quantity</th>
+                                <th>Revenue</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="book : ${report.topBooksByQuantity}">
+                                <td th:text="${book.title}">Book Title</td>
+                                <td th:text="${book.quantitySold}">0</td>
+                                <td th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(book.revenue)}">
+                                    0 VND
+                                </td>
+                            </tr>
+                            <tr th:if="${report.topBooksByQuantity == null or #lists.isEmpty(report.topBooksByQuantity)}">
+                                <td colspan="3" class="text-center text-muted py-4">
+                                    <i class="bi bi-bag fs-2 d-block mb-2"></i>
+                                    No data for selected period
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+
+

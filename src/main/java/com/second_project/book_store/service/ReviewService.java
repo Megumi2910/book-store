@@ -152,5 +152,21 @@ public interface ReviewService {
      * @return Total review count
      */
     Long countUserReviews(Long userId);
+
+    /**
+     * Retrieves all reviews for admin management with optional rating filter.
+     *
+     * @param pageable Pagination parameters
+     * @param rating   Optional rating filter (1-5), can be null
+     * @return Page of ReviewDto
+     */
+    Page<ReviewDto> getAllReviews(Pageable pageable, Integer rating);
+
+    /**
+     * For moderation: removes the textual comment from a review but keeps the rating.
+     *
+     * @param reviewId Review ID
+     */
+    void removeReviewComment(Long reviewId);
 }
 

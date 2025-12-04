@@ -1,6 +1,10 @@
 package com.second_project.book_store.service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import com.second_project.book_store.entity.User;
+import com.second_project.book_store.entity.User.UserRole;
 import com.second_project.book_store.model.ChangePasswordRequestDto;
 import com.second_project.book_store.model.ProfileUpdateDto;
 import com.second_project.book_store.model.ResetPasswordRequestDto;
@@ -89,4 +93,32 @@ public interface UserService {
      * @throws UserNotFoundException if user not found
      */
     User findUserById(Long userId);
+
+    /**
+     * Retrieves users for admin management with optional keyword search.
+     * Keyword is matched against email, first name, and last name (case-insensitive).
+     *
+     * @param pageable Pagination parameters
+     * @param keyword  Optional search keyword (can be null or blank)
+     * @return Page of users
+     */
+    Page<User> getUsers(Pageable pageable, String keyword);
+
+    /**
+     * Updates the role of a user (e.g., USER ↔ ADMIN).
+     *
+     * @param userId The user's ID
+     * @param role   New role to assign
+     * @throws UserNotFoundException if user not found
+     */
+    void updateUserRole(Long userId, UserRole role);
+
+    /**
+     * Toggles the enabled status of a user.
+     * If enabled, user becomes disabled; if disabled, user becomes enabled.
+     *
+     * @param userId The user's ID
+     * @throws UserNotFoundException if user not found
+     */
+    void toggleUserEnabled(Long userId);
 }

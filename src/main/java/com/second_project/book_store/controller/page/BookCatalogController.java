@@ -26,6 +26,7 @@ import com.second_project.book_store.security.CustomUserDetails;
 import com.second_project.book_store.service.BookService;
 import com.second_project.book_store.service.CartService;
 import com.second_project.book_store.service.GenreService;
+import com.second_project.book_store.service.OrderService;
 import com.second_project.book_store.service.ReviewService;
 
 import jakarta.validation.Valid;
@@ -45,13 +46,15 @@ public class BookCatalogController {
     private final GenreService genreService;
     private final CartService cartService;
     private final ReviewService reviewService;
+    private final OrderService orderService;
 
     public BookCatalogController(BookService bookService, GenreService genreService, 
-                                  CartService cartService, ReviewService reviewService) {
+                                  CartService cartService, ReviewService reviewService, OrderService orderService) {
         this.bookService = bookService;
         this.genreService = genreService;
         this.cartService = cartService;
         this.reviewService = reviewService;
+        this.orderService = orderService;
     }
 
     /**
@@ -133,24 +136,29 @@ public class BookCatalogController {
             Long currentUserId = null;
             boolean hasReviewed = false;
             ReviewDto userReview = null;
+            boolean purchased = false;
 
             // Add cart item count for authenticated users
             if (authentication != null && authentication.isAuthenticated()) {
                 CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+                currentUserId = userDetails.getUserId();
+
                 // Check if user is verified or not
                 boolean isVerified = userDetails.isVerified();
                 model.addAttribute("isVerified", isVerified);
-                
+
+                // Check if user has a delivered order for the current book (users can only post reviews for purchased books)
+                purchased = orderService.verifyIfExistOrderItemForDeliveredOrder(id, currentUserId);
+
                 if (isVerified) {
-                    currentUserId = userDetails.getUserId();
-                    Integer cartItemCount = cartService.getCartItemCount(userDetails.getUserId());
+                    Integer cartItemCount = cartService.getCartItemCount(currentUserId);
                     model.addAttribute("cartItemCount", cartItemCount);
                     
                     // Check if user already reviewed this book
                     userReview = reviewService.getUserReviewForBook(currentUserId, id);
-                    hasReviewed = (userReview != null);
+                    hasReviewed = (userReview != null); 
                     model.addAttribute("userReview", userReview);
-                    
+                                   
                     // Only set userRole if userReview exists to avoid NPE
                     if (userReview != null) {
                         model.addAttribute("userRole", userReview.getUserRole());
@@ -160,6 +168,8 @@ public class BookCatalogController {
                 // For guest users, explicitly set isVerified to false
                 model.addAttribute("isVerified", false);
             }
+
+            model.addAttribute("purchased", purchased);
             
             // Always set hasReviewed to prevent null SpEL errors in template
             model.addAttribute("hasReviewed", hasReviewed);

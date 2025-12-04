@@ -2,6 +2,9 @@ package com.second_project.book_store.repository;
 
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -36,12 +39,21 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByPhoneNumber(String phoneNumber);
 
     /**
-     * Finds user by role.
-     * 
+     * Finds a user by role.
+     *
      * @param role User role
      * @return Optional containing User if found
      */
     Optional<User> findByRole(User.UserRole role);
+
+    /**
+     * Counts users by role.
+     * Used to ensure at least one ADMIN user always exists.
+     *
+     * @param role User role
+     * @return Number of users with the given role
+     */
+    long countByRole(User.UserRole role);
 
     /**
      * Count users by enabled status.
@@ -51,4 +63,20 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return Count of users with given status
      */
     Long countByIsEnabled(boolean isEnabled);
+
+    /**
+     * Searches users by email, first name, or last name containing the given keyword
+     * (case-insensitive).
+     *
+     * @param emailKeyword     Keyword for email
+     * @param firstNameKeyword Keyword for first name
+     * @param lastNameKeyword  Keyword for last name
+     * @param pageable         Pagination information
+     * @return Page of users matching the keyword
+     */
+    Page<User> findByEmailContainingIgnoreCaseOrFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(
+            String emailKeyword,
+            String firstNameKeyword,
+            String lastNameKeyword,
+            Pageable pageable);
 }

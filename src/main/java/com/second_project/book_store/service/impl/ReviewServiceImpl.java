@@ -350,5 +350,33 @@ public class ReviewServiceImpl implements ReviewService {
     public Long countUserReviews(Long userId) {
         return reviewRepository.countByUser_UserId(userId);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ReviewDto> getAllReviews(Pageable pageable, Integer rating) {
+        Page<Review> reviewPage;
+        if (rating != null) {
+            reviewPage = reviewRepository.findByRating(rating, pageable);
+        } else {
+            reviewPage = reviewRepository.findAll(pageable);
+        }
+
+        List<ReviewDto> reviewDtos = reviewPage.getContent().stream()
+                // currentUserId is not relevant for admin listing, pass null
+                .map(review -> convertToDto(review, null))
+                .toList();
+
+        return new PageImpl<>(reviewDtos, pageable, reviewPage.getTotalElements());
+    }
+
+    @Override
+    public void removeReviewComment(Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("Review not found"));
+
+        logger.info("Removing comment for review {}", reviewId);
+        review.setComment(null);
+        reviewRepository.save(review);
+    }
 }
 

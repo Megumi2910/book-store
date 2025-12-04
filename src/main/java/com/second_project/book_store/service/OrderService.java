@@ -1,8 +1,11 @@
 package com.second_project.book_store.service;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import com.second_project.book_store.entity.OrderItem;
 import com.second_project.book_store.entity.Order.OrderStatus;
 import com.second_project.book_store.model.CheckoutRequestDto;
 import com.second_project.book_store.model.OrderDto;
@@ -87,5 +90,13 @@ public interface OrderService {
      * @return Total order count
      */
     Long countUserOrders(Long userId);
+
+    /**
+     * Get order item for delivered order -> Fetch bookId and userId to determine if the user can post a review (user can only post a review for a delivered order)
+     * @param bookId The bookId of the order item from a delivered order;
+     * @param userId The userId of the delivered order
+     * @return true if the condition above is satisfied
+     */
+    boolean verifyIfExistOrderItemForDeliveredOrder (Long bookId, Long userId);
 }
 

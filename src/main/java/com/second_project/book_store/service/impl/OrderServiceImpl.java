@@ -31,6 +31,7 @@ import com.second_project.book_store.model.OrderDto;
 import com.second_project.book_store.model.OrderItemDto;
 import com.second_project.book_store.repository.BookRepository;
 import com.second_project.book_store.repository.CartRepository;
+import com.second_project.book_store.repository.OrderItemRepository;
 import com.second_project.book_store.repository.OrderRepository;
 import com.second_project.book_store.repository.PaymentRepository;
 import com.second_project.book_store.repository.UserRepository;
@@ -58,19 +59,22 @@ public class OrderServiceImpl implements OrderService {
     private final BookRepository bookRepository;
     private final UserRepository userRepository;
     private final CartService cartService;
+    private final OrderItemRepository orderItemRepository;
 
     public OrderServiceImpl(OrderRepository orderRepository,
                            PaymentRepository paymentRepository,
                            CartRepository cartRepository,
                            BookRepository bookRepository,
                            UserRepository userRepository,
-                           CartService cartService) {
+                           CartService cartService,
+                           OrderItemRepository orderItemRepository) {
         this.orderRepository = orderRepository;
         this.paymentRepository = paymentRepository;
         this.cartRepository = cartRepository;
         this.bookRepository = bookRepository;
         this.userRepository = userRepository;
         this.cartService = cartService;
+        this.orderItemRepository = orderItemRepository;
     }
 
     @Override
@@ -323,6 +327,16 @@ public class OrderServiceImpl implements OrderService {
 
         Order savedOrder = orderRepository.save(order);
         return convertToDto(savedOrder);
+    }
+
+    @Override
+    public boolean verifyIfExistOrderItemForDeliveredOrder(Long bookId, Long userId) {
+        if (bookId == null || userId == null) {
+            return false;
+        }
+
+        return orderItemRepository
+            .existsByBook_BookIdAndOrder_User_UserIdAndOrder_OrderStatus(bookId, userId, OrderStatus.DELIVERED);
     }
 
     /**
