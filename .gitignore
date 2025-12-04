@@ -1,4 +1,8 @@
-HELP.md
+# Ignore all Markdown files
+*.md
+# But keep the root README.md
+!/README.md
+
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
