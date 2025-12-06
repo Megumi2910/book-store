@@ -46,6 +46,16 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Page<Review> findByRating(Integer rating, Pageable pageable);
 
     /**
+     * Find reviews by book ID and rating.
+     * 
+     * @param bookId Book ID
+     * @param rating Rating value (1-5)
+     * @param pageable Pagination parameters
+     * @return Page of reviews with given book and rating
+     */
+    Page<Review> findByBook_BookIdAndRating(Long bookId, Integer rating, Pageable pageable);
+
+    /**
      * Get recent reviews (for dashboard).
      * 
      * @param pageable Pagination parameters

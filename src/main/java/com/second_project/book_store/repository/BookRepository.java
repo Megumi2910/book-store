@@ -145,5 +145,42 @@ public interface BookRepository extends JpaRepository<Book, Long> {
            "GROUP BY b.bookId " +
            "ORDER BY COALESCE(SUM(oi.quantity), 0) DESC, b.createdAt DESC")
     Page<Book> findPopularBooks(Pageable pageable);
+
+    /**
+     * Find all books with JOIN to BookDetail for sorting by price or quantity.
+     * This method explicitly joins BookDetail to allow sorting by nested properties.
+     * Uses LEFT JOIN (not FETCH) to work properly with pagination and sorting.
+     * 
+     * @param pageable Pagination and sorting parameters (supports sorting by bookDetail.price or bookDetail.quantity)
+     * @return Page of books
+     */
+    @Query("SELECT b FROM Book b LEFT JOIN b.bookDetail bd")
+    Page<Book> findAllWithBookDetail(Pageable pageable);
+
+    /**
+     * Search books by keyword with JOIN to BookDetail for sorting by price or quantity.
+     * Uses LEFT JOIN (not FETCH) to work properly with pagination and sorting.
+     * 
+     * @param keyword Search term
+     * @param pageable Pagination and sorting parameters
+     * @return Page of matching books
+     */
+    @Query("SELECT DISTINCT b FROM Book b LEFT JOIN b.bookDetail bd " +
+           "WHERE LOWER(b.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "OR LOWER(b.author) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    Page<Book> searchByKeywordWithBookDetail(@Param("keyword") String keyword, Pageable pageable);
+
+    /**
+     * Find books by genre with JOIN to BookDetail for sorting by price or quantity.
+     * Uses LEFT JOIN (not FETCH) to work properly with pagination and sorting.
+     * 
+     * @param genreId Genre ID
+     * @param pageable Pagination and sorting parameters
+     * @return Page of books in the genre
+     */
+    @Query("SELECT DISTINCT b FROM Book b " +
+           "LEFT JOIN b.bookDetail bd " +
+           "JOIN b.genres g WHERE g.id = :genreId")
+    Page<Book> findByGenreIdWithBookDetail(@Param("genreId") Long genreId, Pageable pageable);
 }
 

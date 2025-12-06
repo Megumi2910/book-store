@@ -1,11 +1,8 @@
 package com.second_project.book_store.service;
 
-import java.util.Optional;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import com.second_project.book_store.entity.OrderItem;
 import com.second_project.book_store.entity.Order.OrderStatus;
 import com.second_project.book_store.model.CheckoutRequestDto;
 import com.second_project.book_store.model.OrderDto;

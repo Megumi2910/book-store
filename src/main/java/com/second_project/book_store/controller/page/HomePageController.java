@@ -71,8 +71,8 @@ public class HomePageController {
             model.addAttribute("isAuthenticated", false);
         }
 
-        // Get recently added books (for horizontal scroll)
-        List<BookDto> recentlyAddedBooks = bookService.getRecentlyAddedBooks(12);
+        // Get recently added books for carousel (supports any number of books)
+        List<BookDto> recentlyAddedBooks = bookService.getRecentlyAddedBooks(10);
         model.addAttribute("recentlyAddedBooks", recentlyAddedBooks);
 
         // Get popular books (for 3-row grid - 9 books)

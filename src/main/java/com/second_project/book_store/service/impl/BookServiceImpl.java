@@ -171,20 +171,60 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public Page<BookDto> getAllBooks(Pageable pageable) {
-        Page<Book> books = bookRepository.findAll(pageable);
-        return books.map(this::convertToDto);
+        // Check if sorting requires BookDetail fields (price or quantity)
+        if (requiresBookDetailSort(pageable)) {
+            Page<Book> books = bookRepository.findAllWithBookDetail(pageable);
+            return books.map(this::convertToDto);
+        } else {
+            Page<Book> books = bookRepository.findAll(pageable);
+            return books.map(this::convertToDto);
+        }
     }
 
     @Override
     public Page<BookDto> searchBooks(String keyword, Pageable pageable) {
-        Page<Book> books = bookRepository.searchByKeyword(keyword, pageable);
-        return books.map(this::convertToDto);
+        // Check if sorting requires BookDetail fields (price or quantity)
+        if (requiresBookDetailSort(pageable)) {
+            Page<Book> books = bookRepository.searchByKeywordWithBookDetail(keyword, pageable);
+            return books.map(this::convertToDto);
+        } else {
+            Page<Book> books = bookRepository.searchByKeyword(keyword, pageable);
+            return books.map(this::convertToDto);
+        }
     }
 
     @Override
     public Page<BookDto> getBooksByGenre(Long genreId, Pageable pageable) {
-        Page<Book> books = bookRepository.findByGenreId(genreId, pageable);
-        return books.map(this::convertToDto);
+        // Check if sorting requires BookDetail fields (price or quantity)
+        if (requiresBookDetailSort(pageable)) {
+            Page<Book> books = bookRepository.findByGenreIdWithBookDetail(genreId, pageable);
+            return books.map(this::convertToDto);
+        } else {
+            Page<Book> books = bookRepository.findByGenreId(genreId, pageable);
+            return books.map(this::convertToDto);
+        }
+    }
+
+    /**
+     * Check if the Pageable's Sort requires BookDetail fields (price or quantity).
+     * This determines whether we need to use repository methods with explicit JOINs.
+     * 
+     * @param pageable Pageable with Sort
+     * @return true if sorting by bookDetail.price or bookDetail.quantity
+     */
+    private boolean requiresBookDetailSort(Pageable pageable) {
+        if (pageable.getSort().isUnsorted()) {
+            return false;
+        }
+        
+        return pageable.getSort().stream()
+            .anyMatch(order -> {
+                String property = order.getProperty();
+                return "bookDetail.price".equals(property) || 
+                       "bookDetail.quantity".equals(property) ||
+                       "price".equals(property) || 
+                       "stock".equals(property);
+            });
     }
 
     @Override

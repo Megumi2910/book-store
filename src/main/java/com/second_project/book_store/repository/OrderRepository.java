@@ -39,6 +39,16 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Page<Order> findByOrderStatus(OrderStatus status, Pageable pageable);
 
     /**
+     * Find orders by status with orderItems eagerly fetched.
+     * Uses JOIN FETCH to avoid lazy loading issues.
+     * 
+     * @param status Order status
+     * @return List of orders with orderItems loaded
+     */
+    @Query("SELECT DISTINCT o FROM Order o LEFT JOIN FETCH o.orderItems WHERE o.orderStatus = :status")
+    List<Order> findByOrderStatusWithItems(@Param("status") OrderStatus status);
+
+    /**
      * Find orders by date range.
      * 
      * @param startDate Start date
@@ -141,5 +151,22 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
            "WHERE o.orderStatus = 'DELIVERED' AND o.orderDate >= :startDate " +
            "GROUP BY CAST(o.orderDate AS date) ORDER BY CAST(o.orderDate AS date)")
     List<Object[]> getDailyRevenue(@Param("startDate") LocalDateTime startDate);
+
+    /**
+     * Count distinct delivered orders that contain a specific book within a date range.
+     * Used for book-specific reports.
+     *
+     * @param startDate Start date-time (inclusive)
+     * @param endDate   End date-time (inclusive)
+     * @param bookId    Book ID
+     * @return Number of distinct delivered orders containing the book
+     */
+    @Query("SELECT COUNT(DISTINCT oi.order.orderId) FROM OrderItem oi " +
+           "WHERE oi.order.orderStatus = 'DELIVERED' " +
+           "AND oi.order.orderDate >= :startDate AND oi.order.orderDate <= :endDate " +
+           "AND oi.book.bookId = :bookId")
+    long countDeliveredOrdersByDateRangeAndBook(@Param("startDate") LocalDateTime startDate,
+                                                @Param("endDate") LocalDateTime endDate,
+                                                @Param("bookId") Long bookId);
 }
 

@@ -12,7 +12,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
 import com.second_project.book_store.model.AdminReportDto;
+import com.second_project.book_store.model.BookDto;
+import com.second_project.book_store.service.BookService;
 import com.second_project.book_store.service.ReportService;
 
 /**
@@ -26,15 +32,18 @@ public class AdminReportController {
     private static final Logger logger = LoggerFactory.getLogger(AdminReportController.class);
 
     private final ReportService reportService;
+    private final BookService bookService;
 
-    public AdminReportController(ReportService reportService) {
+    public AdminReportController(ReportService reportService, BookService bookService) {
         this.reportService = reportService;
+        this.bookService = bookService;
     }
 
     @GetMapping({"", "/"})
     public String showReports(
             @RequestParam(required = false) String start,
             @RequestParam(required = false) String end,
+            @RequestParam(required = false) Long bookId,
             Model model) {
 
         LocalDate endDate;
@@ -60,14 +69,19 @@ public class AdminReportController {
             model.addAttribute("error", "Invalid start date format. Showing last 7 days instead.");
         }
 
-        logger.info("Admin viewing reports from {} to {}", startDate, endDate);
+        logger.info("Admin viewing reports from {} to {}, bookId: {}", startDate, endDate, bookId);
 
-        AdminReportDto report = reportService.getReport(startDate, endDate);
+        AdminReportDto report = reportService.getReport(startDate, endDate, bookId);
 
         model.addAttribute("report", report);
         model.addAttribute("pageTitle", "Reports & Analytics");
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
+        model.addAttribute("selectedBookId", bookId);
+
+        // Add books for filter dropdown
+        Pageable bookPageable = PageRequest.of(0, 1000, Sort.by("title").ascending());
+        model.addAttribute("books", bookService.getAllBooks(bookPageable).getContent());
 
         return "admin/reports/index";
     }

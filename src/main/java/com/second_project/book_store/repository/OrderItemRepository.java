@@ -47,4 +47,50 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long>{
     List<Object[]> findTopBooksByRevenueInDateRange(@Param("startDate") LocalDateTime startDate,
                                                     @Param("endDate") LocalDateTime endDate);
 
+    /**
+     * Aggregates top books by quantity sold within a date range, filtered by book ID.
+     * Returns rows of [bookId, title, quantity, revenue].
+     */
+    @Query("SELECT oi.book.bookId, oi.book.title, SUM(oi.quantity), SUM(oi.priceAtPurchase * oi.quantity) " +
+           "FROM OrderItem oi " +
+           "WHERE oi.order.orderStatus = 'DELIVERED' " +
+           "AND oi.order.orderDate >= :startDate AND oi.order.orderDate <= :endDate " +
+           "AND oi.book.bookId = :bookId " +
+           "GROUP BY oi.book.bookId, oi.book.title " +
+           "ORDER BY SUM(oi.quantity) DESC")
+    List<Object[]> findTopBooksByQuantityInDateRangeForBook(@Param("startDate") LocalDateTime startDate,
+                                                             @Param("endDate") LocalDateTime endDate,
+                                                             @Param("bookId") Long bookId);
+
+    /**
+     * Aggregates top books by revenue within a date range, filtered by book ID.
+     * Returns rows of [bookId, title, quantity, revenue].
+     */
+    @Query("SELECT oi.book.bookId, oi.book.title, SUM(oi.quantity), SUM(oi.priceAtPurchase * oi.quantity) " +
+           "FROM OrderItem oi " +
+           "WHERE oi.order.orderStatus = 'DELIVERED' " +
+           "AND oi.order.orderDate >= :startDate AND oi.order.orderDate <= :endDate " +
+           "AND oi.book.bookId = :bookId " +
+           "GROUP BY oi.book.bookId, oi.book.title " +
+           "ORDER BY SUM(oi.priceAtPurchase * oi.quantity) DESC")
+    List<Object[]> findTopBooksByRevenueInDateRangeForBook(@Param("startDate") LocalDateTime startDate,
+                                                           @Param("endDate") LocalDateTime endDate,
+                                                           @Param("bookId") Long bookId);
+
+    /**
+     * Calculate revenue for a specific book within a date range.
+     * 
+     * @param startDate Start date
+     * @param endDate End date
+     * @param bookId Book ID
+     * @return Revenue for the book
+     */
+    @Query("SELECT COALESCE(SUM(oi.priceAtPurchase * oi.quantity), 0) FROM OrderItem oi " +
+           "WHERE oi.order.orderStatus = 'DELIVERED' " +
+           "AND oi.order.orderDate >= :startDate AND oi.order.orderDate <= :endDate " +
+           "AND oi.book.bookId = :bookId")
+    Double calculateRevenueByDateRangeAndBook(@Param("startDate") LocalDateTime startDate,
+                                              @Param("endDate") LocalDateTime endDate,
+                                              @Param("bookId") Long bookId);
+
 }

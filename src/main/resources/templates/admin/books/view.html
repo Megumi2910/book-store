@@ -17,7 +17,7 @@
                 </ol>
             </nav>
             <div class="d-flex justify-content-between align-items-center">
-                <h2 class="mb-0">📖 Book Details</h2>
+                <h2 class="mb-0">Book Details</h2>
                 <div>
                     <a th:href="@{/admin/books/{id}/edit(id=${book.bookId})}" class="btn btn-primary">
                         <i class="bi bi-pencil me-1"></i> Edit Book
@@ -138,12 +138,12 @@
                             <a th:href="@{/admin/books/{id}/edit(id=${book.bookId})}" class="btn btn-primary">
                                 <i class="bi bi-pencil me-1"></i> Edit Book
                             </a>
-                            <button class="btn btn-outline-secondary" onclick="alert('Coming soon!')">
+                            <a th:href="@{/admin/reports(bookId=${book.bookId})}" class="btn btn-outline-secondary">
                                 <i class="bi bi-graph-up me-1"></i> View Sales Report
-                            </button>
-                            <button class="btn btn-outline-secondary" onclick="alert('Coming soon!')">
+                            </a>
+                            <a th:href="@{/admin/reviews(bookId=${book.bookId})}" class="btn btn-outline-secondary">
                                 <i class="bi bi-star me-1"></i> View Reviews
-                            </button>
+                            </a>
                             <form th:action="@{/admin/books/{id}/delete(id=${book.bookId})}" 
                                   method="post" class="d-inline"
                                   onsubmit="return confirmDelete('Are you sure you want to delete this book? This action cannot be undone.');">

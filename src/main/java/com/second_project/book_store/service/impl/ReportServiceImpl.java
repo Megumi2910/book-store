@@ -36,8 +36,8 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
-    public AdminReportDto getReport(LocalDate startDate, LocalDate endDate) {
-        logger.info("Generating admin report from {} to {}", startDate, endDate);
+    public AdminReportDto getReport(LocalDate startDate, LocalDate endDate, Long bookId) {
+        logger.info("Generating admin report from {} to {}, bookId: {}", startDate, endDate, bookId);
 
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.atTime(LocalTime.MAX);
@@ -46,38 +46,72 @@ public class ReportServiceImpl implements ReportService {
         dto.setStartDate(startDate);
         dto.setEndDate(endDate);
 
-        // High-level order stats (DELIVERED orders within the selected range)
-        Double revenue = orderRepository.calculateRevenueByDateRange(startDateTime, endDateTime);
-        dto.setTotalRevenue(revenue != null ? revenue.doubleValue() : 0.0);
+        if (bookId != null) {
+            // Book-specific report
+            Double revenue = orderItemRepository.calculateRevenueByDateRangeAndBook(startDateTime, endDateTime, bookId);
+            dto.setTotalRevenue(revenue != null ? revenue.doubleValue() : 0.0);
 
-        long deliveredOrdersInRange = orderRepository.countDeliveredOrdersByDateRange(startDateTime, endDateTime);
-        dto.setTotalOrders(deliveredOrdersInRange);
+            long deliveredOrdersInRange = orderRepository.countDeliveredOrdersByDateRangeAndBook(startDateTime, endDateTime, bookId);
+            dto.setTotalOrders(deliveredOrdersInRange);
 
-        dto.setAverageOrderValue(deliveredOrdersInRange > 0
-                ? dto.getTotalRevenue() / deliveredOrdersInRange
-                : 0.0);
+            dto.setAverageOrderValue(deliveredOrdersInRange > 0
+                    ? dto.getTotalRevenue() / deliveredOrdersInRange
+                    : 0.0);
 
-        // Top books by quantity
-        List<Object[]> topByQtyRows = orderItemRepository.findTopBooksByQuantityInDateRange(startDateTime, endDateTime);
-        List<TopBook> topByQty = topByQtyRows.stream()
-                .map(row -> new TopBook(
-                        (Long) row[0],
-                        (String) row[1],
-                        ((Number) row[2]).longValue(),
-                        ((Number) row[3]).doubleValue()))
-                .collect(Collectors.toList());
-        dto.setTopBooksByQuantity(topByQty);
+            // For book-specific reports, show only this book in the top books lists
+            List<Object[]> topByQtyRows = orderItemRepository.findTopBooksByQuantityInDateRangeForBook(startDateTime, endDateTime, bookId);
+            List<TopBook> topByQty = topByQtyRows.stream()
+                    .map(row -> new TopBook(
+                            (Long) row[0],
+                            (String) row[1],
+                            ((Number) row[2]).longValue(),
+                            ((Number) row[3]).doubleValue()))
+                    .collect(Collectors.toList());
+            dto.setTopBooksByQuantity(topByQty);
 
-        // Top books by revenue
-        List<Object[]> topByRevRows = orderItemRepository.findTopBooksByRevenueInDateRange(startDateTime, endDateTime);
-        List<TopBook> topByRev = topByRevRows.stream()
-                .map(row -> new TopBook(
-                        (Long) row[0],
-                        (String) row[1],
-                        ((Number) row[2]).longValue(),
-                        ((Number) row[3]).doubleValue()))
-                .collect(Collectors.toList());
-        dto.setTopBooksByRevenue(topByRev);
+            List<Object[]> topByRevRows = orderItemRepository.findTopBooksByRevenueInDateRangeForBook(startDateTime, endDateTime, bookId);
+            List<TopBook> topByRev = topByRevRows.stream()
+                    .map(row -> new TopBook(
+                            (Long) row[0],
+                            (String) row[1],
+                            ((Number) row[2]).longValue(),
+                            ((Number) row[3]).doubleValue()))
+                    .collect(Collectors.toList());
+            dto.setTopBooksByRevenue(topByRev);
+        } else {
+            // General report (all books)
+            Double revenue = orderRepository.calculateRevenueByDateRange(startDateTime, endDateTime);
+            dto.setTotalRevenue(revenue != null ? revenue.doubleValue() : 0.0);
+
+            long deliveredOrdersInRange = orderRepository.countDeliveredOrdersByDateRange(startDateTime, endDateTime);
+            dto.setTotalOrders(deliveredOrdersInRange);
+
+            dto.setAverageOrderValue(deliveredOrdersInRange > 0
+                    ? dto.getTotalRevenue() / deliveredOrdersInRange
+                    : 0.0);
+
+            // Top books by quantity
+            List<Object[]> topByQtyRows = orderItemRepository.findTopBooksByQuantityInDateRange(startDateTime, endDateTime);
+            List<TopBook> topByQty = topByQtyRows.stream()
+                    .map(row -> new TopBook(
+                            (Long) row[0],
+                            (String) row[1],
+                            ((Number) row[2]).longValue(),
+                            ((Number) row[3]).doubleValue()))
+                    .collect(Collectors.toList());
+            dto.setTopBooksByQuantity(topByQty);
+
+            // Top books by revenue
+            List<Object[]> topByRevRows = orderItemRepository.findTopBooksByRevenueInDateRange(startDateTime, endDateTime);
+            List<TopBook> topByRev = topByRevRows.stream()
+                    .map(row -> new TopBook(
+                            (Long) row[0],
+                            (String) row[1],
+                            ((Number) row[2]).longValue(),
+                            ((Number) row[3]).doubleValue()))
+                    .collect(Collectors.toList());
+            dto.setTopBooksByRevenue(topByRev);
+        }
 
         return dto;
     }

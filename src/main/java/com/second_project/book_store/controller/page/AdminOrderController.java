@@ -30,7 +30,6 @@ import com.second_project.book_store.service.OrderService;
 public class AdminOrderController {
 
     private static final Logger logger = LoggerFactory.getLogger(AdminOrderController.class);
-    private static final int DEFAULT_PAGE_SIZE = 20;
 
     private final OrderService orderService;
 

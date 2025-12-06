@@ -353,9 +353,14 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ReviewDto> getAllReviews(Pageable pageable, Integer rating) {
+    public Page<ReviewDto> getAllReviews(Pageable pageable, Integer rating, Long bookId) {
         Page<Review> reviewPage;
-        if (rating != null) {
+        
+        if (bookId != null && rating != null) {
+            reviewPage = reviewRepository.findByBook_BookIdAndRating(bookId, rating, pageable);
+        } else if (bookId != null) {
+            reviewPage = reviewRepository.findByBook_BookId(bookId, pageable);
+        } else if (rating != null) {
             reviewPage = reviewRepository.findByRating(rating, pageable);
         } else {
             reviewPage = reviewRepository.findAll(pageable);

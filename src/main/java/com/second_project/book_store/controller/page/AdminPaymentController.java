@@ -33,7 +33,6 @@ import com.second_project.book_store.service.OrderService;
 public class AdminPaymentController {
 
     private static final Logger logger = LoggerFactory.getLogger(AdminPaymentController.class);
-    private static final int DEFAULT_PAGE_SIZE = 20;
 
     private final PaymentRepository paymentRepository;
     private final OrderService orderService;

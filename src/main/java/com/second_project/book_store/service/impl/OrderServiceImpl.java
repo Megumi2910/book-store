@@ -29,13 +29,11 @@ import com.second_project.book_store.entity.User;
 import com.second_project.book_store.model.CheckoutRequestDto;
 import com.second_project.book_store.model.OrderDto;
 import com.second_project.book_store.model.OrderItemDto;
-import com.second_project.book_store.repository.BookRepository;
 import com.second_project.book_store.repository.CartRepository;
 import com.second_project.book_store.repository.OrderItemRepository;
 import com.second_project.book_store.repository.OrderRepository;
 import com.second_project.book_store.repository.PaymentRepository;
 import com.second_project.book_store.repository.UserRepository;
-import com.second_project.book_store.service.CartService;
 import com.second_project.book_store.service.OrderService;
 
 /**
@@ -56,24 +54,18 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
     private final CartRepository cartRepository;
-    private final BookRepository bookRepository;
     private final UserRepository userRepository;
-    private final CartService cartService;
     private final OrderItemRepository orderItemRepository;
 
     public OrderServiceImpl(OrderRepository orderRepository,
                            PaymentRepository paymentRepository,
                            CartRepository cartRepository,
-                           BookRepository bookRepository,
                            UserRepository userRepository,
-                           CartService cartService,
                            OrderItemRepository orderItemRepository) {
         this.orderRepository = orderRepository;
         this.paymentRepository = paymentRepository;
         this.cartRepository = cartRepository;
-        this.bookRepository = bookRepository;
         this.userRepository = userRepository;
-        this.cartService = cartService;
         this.orderItemRepository = orderItemRepository;
     }
 

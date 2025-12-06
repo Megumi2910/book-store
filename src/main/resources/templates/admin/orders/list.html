@@ -9,7 +9,7 @@
     <div layout:fragment="content">
         <!-- Page Header -->
         <div class="mb-4">
-            <h2 class="mb-1">📦 Order Management</h2>
+            <h2 class="mb-1">Order Management</h2>
             <p class="text-muted mb-0">Manage customer orders</p>
         </div>
 
@@ -94,15 +94,55 @@
 
                 <!-- Pagination -->
                 <nav th:if="${totalPages > 1}" class="mt-4">
-                    <ul class="pagination justify-content-center">
+                    <ul class="pagination justify-content-center flex-wrap">
                         <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
                             <a class="page-link" th:href="@{/admin/orders(status=${selectedStatus}, size=${param.size != null ? param.size[0] : 20}, page=${currentPage - 1})}">Previous</a>
                         </li>
-                        <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}" 
-                            class="page-item" 
-                            th:classappend="${i == currentPage} ? 'active'">
-                            <a class="page-link" th:href="@{/admin/orders(status=${selectedStatus}, size=${param.size != null ? param.size[0] : 20}, page=${i})}" th:text="${i + 1}">1</a>
-                        </li>
+                        <!-- Calculate range -->
+                        <th:block th:with="startPage=${T(java.lang.Math).max(0, currentPage - 2)}, 
+                                           endPage=${T(java.lang.Math).min(totalPages - 1, currentPage + 2)}">
+                            <!-- First page (if not in range) -->
+                            <li class="page-item" th:if="${startPage > 1}"
+                                th:classappend="${currentPage == 0} ? 'active'">
+                                <a class="page-link" th:href="@{/admin/orders(status=${selectedStatus}, size=${param.size != null ? param.size[0] : 20}, page=0)}">1</a>
+                            </li>
+                            <!-- Show page 1 when startPage = 1 (loop starts at page 2) -->
+                            <li class="page-item" th:if="${startPage == 1}"
+                                th:classappend="${currentPage == 0} ? 'active'">
+                                <a class="page-link" th:href="@{/admin/orders(status=${selectedStatus}, size=${param.size != null ? param.size[0] : 20}, page=0)}">1</a>
+                            </li>
+                            <!-- Ellipsis before range -->
+                            <li class="page-item" th:if="${startPage > 1}">
+                                <span class="page-link" 
+                                      style="cursor: pointer;" 
+                                      th:data-total-pages="${totalPages}"
+                                      th:data-base-url="@{/admin/orders(status=${selectedStatus}, size=${param.size != null ? param.size[0] : 20})}"
+                                      onclick="showPageInput(this)">
+                                    ...
+                                </span>
+                            </li>
+                            <!-- Pages in range -->
+                            <li th:each="i : ${#numbers.sequence(startPage, endPage)}" 
+                                class="page-item" 
+                                th:classappend="${i == currentPage} ? 'active'">
+                                <a class="page-link" th:href="@{/admin/orders(status=${selectedStatus}, size=${param.size != null ? param.size[0] : 20}, page=${i})}" th:text="${i + 1}">1</a>
+                            </li>
+                            <!-- Ellipsis after range -->
+                            <li class="page-item" th:if="${endPage < totalPages - 2}">
+                                <span class="page-link" 
+                                      style="cursor: pointer;" 
+                                      th:data-total-pages="${totalPages}"
+                                      th:data-base-url="@{/admin/orders(status=${selectedStatus}, size=${param.size != null ? param.size[0] : 20})}"
+                                      onclick="showPageInput(this)">
+                                    ...
+                                </span>
+                            </li>
+                            <!-- Last page (if not in range) -->
+                            <li class="page-item" th:if="${endPage < totalPages - 1}"
+                                th:classappend="${currentPage == totalPages - 1} ? 'active'">
+                                <a class="page-link" th:href="@{/admin/orders(status=${selectedStatus}, size=${param.size != null ? param.size[0] : 20}, page=${totalPages - 1})}" th:text="${totalPages}">1</a>
+                            </li>
+                        </th:block>
                         <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
                             <a class="page-link" th:href="@{/admin/orders(status=${selectedStatus}, size=${param.size != null ? param.size[0] : 20}, page=${currentPage + 1})}">Next</a>
                         </li>
@@ -111,6 +151,65 @@
             </div>
         </div>
     </div>
-</body>
-</html>
+
+<th:block layout:fragment="extra-js">
+<script>
+function showPageInput(element) {
+    const totalPages = parseInt(element.getAttribute('data-total-pages'));
+    const baseUrl = element.getAttribute('data-base-url');
+    const parentLi = element.parentElement;
+    
+    // Create input field
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.min = '1';
+    input.max = totalPages.toString();
+    input.className = 'form-control form-control-sm';
+    input.style.width = '60px';
+    input.style.display = 'inline-block';
+    input.style.textAlign = 'center';
+    input.placeholder = '...';
+    input.value = '';
+    
+    // Replace span with input
+    const span = element;
+    span.style.display = 'none';
+    parentLi.appendChild(input);
+    input.focus();
+    input.select();
+    
+    // Handle Enter key
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            const pageNum = parseInt(input.value);
+            
+            // Validation
+            if (isNaN(pageNum) || pageNum < 1 || pageNum > totalPages) {
+                alert(`Please enter a valid page number between 1 and ${totalPages}.`);
+                input.focus();
+                input.select();
+                return;
+            }
+            
+            // Navigate to the page (page is 0-indexed in Spring)
+            const targetPage = pageNum - 1;
+            const url = baseUrl + (baseUrl.includes('?') ? '&' : '?') + 'page=' + targetPage;
+            window.location.href = url;
+        } else if (e.key === 'Escape') {
+            // Cancel - restore ellipsis
+            input.remove();
+            span.style.display = '';
+        }
+    });
+    
+    // Handle blur (click outside) - restore ellipsis if empty
+    input.addEventListener('blur', function() {
+        if (input.value === '') {
+            input.remove();
+            span.style.display = '';
+        }
+    });
+}
+</script>
+</th:block>
 

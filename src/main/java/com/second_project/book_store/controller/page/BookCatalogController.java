@@ -68,11 +68,12 @@ public class BookCatalogController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long genreId,
             @RequestParam(required = false) Boolean popular,
+            @RequestParam(required = false) Boolean recent,
             Authentication authentication,
             Model model) {
 
-        logger.debug("Browsing books - page: {}, size: {}, keyword: {}, genreId: {}, popular: {}", 
-                    page, size, keyword, genreId, popular);
+        logger.debug("Browsing books - page: {}, size: {}, keyword: {}, genreId: {}, popular: {}, recent: {}", 
+                    page, size, keyword, genreId, popular, recent);
 
         // Ensure size doesn't exceed reasonable limit
         if (size > 50) {
@@ -95,6 +96,11 @@ public class BookCatalogController {
             pageable = PageRequest.of(page, size);
             bookPage = bookService.getPopularBooks(pageable);
             model.addAttribute("popular", true);
+        } else if (recent != null && recent) {
+            // Recently added books page - show newest books first
+            pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+            bookPage = bookService.getAllBooks(pageable); // Already sorted by createdAt DESC
+            model.addAttribute("recent", true);
         } else {
             pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
             bookPage = bookService.getAllBooks(pageable);

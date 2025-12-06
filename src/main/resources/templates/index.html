@@ -17,21 +17,13 @@
             overflow-y: hidden;
             white-space: nowrap;
             -webkit-overflow-scrolling: touch;
-            scrollbar-width: thin;
+            scroll-behavior: smooth;
+            /* Hide scrollbar */
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
         }
         .horizontal-scroll::-webkit-scrollbar {
-            height: 8px;
-        }
-        .horizontal-scroll::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-        .horizontal-scroll::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 10px;
-        }
-        .horizontal-scroll::-webkit-scrollbar-thumb:hover {
-            background: #555;
+            display: none; /* Chrome, Safari, Opera */
         }
         .book-card-inline {
             display: inline-block;
@@ -39,13 +31,40 @@
             white-space: normal;
             margin-right: 15px;
         }
+        .carousel-wrapper {
+            position: relative;
+        }
+        .carousel-dots {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .carousel-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ddd;
+            border: 2px solid #999;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .carousel-dot:hover {
+            background: #bbb;
+            border-color: #777;
+        }
+        .carousel-dot.active {
+            background: #0d6efd;
+            border-color: #0d6efd;
+            transform: scale(1.2);
+        }
     </style>
 </head>
 <body>
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
-            <a class="navbar-brand" th:href="@{/}">📚 Book Store</a>
+            <a class="navbar-brand" th:href="@{/}">Book Store</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -137,38 +156,45 @@
         <!-- Recently Added Books (Horizontal Scroll) -->
         <div class="mb-5" th:if="${recentlyAddedBooks != null and !recentlyAddedBooks.empty}">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h3>🆕 Recently Added</h3>
+                <h3>Recently Added</h3>
+                <a th:href="@{/books(recent=true)}" class="btn btn-outline-primary">
+                    See More <i class="bi bi-arrow-right ms-1"></i>
+                </a>
             </div>
-            <div class="horizontal-scroll pb-3">
-                <div th:each="book : ${recentlyAddedBooks}" class="book-card-inline">
-                    <div class="card book-card shadow-sm">
-                        <div class="position-relative">
-                            <img th:src="${book.imageUrl != null ? book.imageUrl : '/images/placeholder.jpg'}" 
-                                 class="card-img-top" 
-                                 style="height: 250px; object-fit: cover;"
-                                 th:alt="${book.title}">
-                            <span th:if="${book.quantity != null and book.quantity == 0}" 
-                                  class="badge bg-danger position-absolute top-0 end-0 m-2">
-                                Out of Stock
-                            </span>
-                        </div>
-                        <div class="card-body">
-                            <h6 class="card-title text-truncate" th:text="${book.title}">Book Title</h6>
-                            <p class="text-muted small mb-2 text-truncate" th:text="${book.author}">Author</p>
-                            <p class="h6 text-primary mb-2" th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(book.price)}">0 VND</p>
-                            <a th:href="@{/books/{id}(id=${book.bookId})}" class="btn btn-sm btn-primary w-100">
-                                View Details
-                            </a>
+            <div class="carousel-wrapper">
+                <div class="horizontal-scroll pb-3" id="recentlyAddedCarousel">
+                    <div th:each="book : ${recentlyAddedBooks}" class="book-card-inline">
+                        <div class="card book-card shadow-sm">
+                            <div class="position-relative">
+                                <img th:src="${book.imageUrl != null ? book.imageUrl : '/images/placeholder.jpg'}" 
+                                     class="card-img-top" 
+                                     style="height: 250px; object-fit: cover;"
+                                     th:alt="${book.title}">
+                                <span th:if="${book.quantity != null and book.quantity == 0}" 
+                                      class="badge bg-danger position-absolute top-0 end-0 m-2">
+                                    Out of Stock
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <h6 class="card-title text-truncate" th:text="${book.title}">Book Title</h6>
+                                <p class="text-muted small mb-2 text-truncate" th:text="${book.author}">Author</p>
+                                <p class="h6 text-primary mb-2" th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(book.price)}">0 VND</p>
+                                <a th:href="@{/books/{id}(id=${book.bookId})}" class="btn btn-sm btn-primary w-100">
+                                    View Details
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
+                <!-- Dot Indicators -->
+                <div class="carousel-dots" id="recentlyAddedDots"></div>
             </div>
         </div>
 
         <!-- Popular Books (3-Row Grid) -->
         <div class="mb-4" th:if="${popularBooks != null and !popularBooks.empty}">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h3>🔥 Popular Books</h3>
+                <h3>Popular Books</h3>
                 <a th:href="@{/books(popular=true)}" class="btn btn-outline-primary">
                     See More <i class="bi bi-arrow-right ms-1"></i>
                 </a>
@@ -289,6 +315,93 @@
                     startCooldownTimer(initialCooldown);
                 }
             }
+        });
+    </script>
+    
+    <!-- Carousel Dot Navigation Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const carousel = document.getElementById('recentlyAddedCarousel');
+            const dotsContainer = document.getElementById('recentlyAddedDots');
+            
+            if (!carousel || !dotsContainer) {
+                return; // Elements don't exist, skip initialization
+            }
+            
+            // Calculate number of pages dynamically based on actual number of books (5 books per page)
+            const booksPerPage = 5;
+            const totalBooks = carousel.querySelectorAll('.book-card-inline').length;
+            const totalPages = Math.ceil(totalBooks / booksPerPage);
+            
+            // Only show dots if there's more than one page
+            if (totalPages <= 1) {
+                dotsContainer.style.display = 'none';
+                return;
+            }
+            
+            // Create dots
+            for (let i = 0; i < totalPages; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+                dot.setAttribute('data-page', i);
+                dot.setAttribute('aria-label', 'Go to page ' + (i + 1));
+                dotsContainer.appendChild(dot);
+            }
+            
+            const dots = dotsContainer.querySelectorAll('.carousel-dot');
+            const cardWidth = 200 + 15; // card width + margin
+            
+            // Function to scroll to a specific page with smooth animation
+            function goToPage(pageIndex) {
+                const targetPosition = pageIndex * booksPerPage * cardWidth;
+                const startPosition = carousel.scrollLeft;
+                const distance = targetPosition - startPosition;
+                const duration = 1200; // 1200ms for smooth, slow animation
+                let startTime = null;
+                
+                function animateScroll(currentTime) {
+                    if (startTime === null) startTime = currentTime;
+                    const timeElapsed = currentTime - startTime;
+                    const progress = Math.min(timeElapsed / duration, 1);
+                    
+                    // Easing function for smooth animation (ease-in-out)
+                    const ease = progress < 0.5 
+                        ? 2 * progress * progress 
+                        : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+                    
+                    carousel.scrollLeft = startPosition + distance * ease;
+                    
+                    if (timeElapsed < duration) {
+                        requestAnimationFrame(animateScroll);
+                    }
+                }
+                
+                requestAnimationFrame(animateScroll);
+            }
+            
+            // Function to update active dot based on scroll position
+            function updateActiveDot() {
+                const scrollPosition = carousel.scrollLeft;
+                const currentPage = Math.round(scrollPosition / (booksPerPage * cardWidth));
+                const activePage = Math.min(currentPage, totalPages - 1);
+                
+                dots.forEach((dot, index) => {
+                    dot.classList.toggle('active', index === activePage);
+                });
+            }
+            
+            // Add click handlers to dots
+            dots.forEach((dot, index) => {
+                dot.addEventListener('click', function() {
+                    goToPage(index);
+                });
+            });
+            
+            // Update active dot on scroll
+            carousel.addEventListener('scroll', updateActiveDot);
+            
+            // Initial state
+            updateActiveDot();
         });
     </script>
 </body>

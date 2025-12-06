@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.second_project.book_store.entity.Genre;
 import com.second_project.book_store.model.BookDto;
 import com.second_project.book_store.model.GenreDto;
 import com.second_project.book_store.service.BookService;
@@ -47,7 +46,6 @@ import jakarta.validation.Valid;
 public class AdminBookController {
 
     private static final Logger logger = LoggerFactory.getLogger(AdminBookController.class);
-    private static final int DEFAULT_PAGE_SIZE = 10;
 
     private final BookService bookService;
     private final GenreService genreService;
@@ -70,13 +68,36 @@ public class AdminBookController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long genreId,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortDir,
             Model model) {
         
-        logger.info("Admin listing books - page: {}, size: {}, keyword: {}, genreId: {}", 
-                    page, size, keyword, genreId);
+        logger.info("Admin listing books - page: {}, size: {}, keyword: {}, genreId: {}, sortBy: {}, sortDir: {}", 
+                    page, size, keyword, genreId, sortBy, sortDir);
 
         try {
-            Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+            // Build sort - default to createdAt desc if no sort specified
+            Sort sort;
+            if (sortBy != null && !sortBy.trim().isEmpty()) {
+                // Map UI field names to entity field names
+                String entityField = mapSortField(sortBy);
+                if (entityField != null) {
+                    if ("asc".equalsIgnoreCase(sortDir)) {
+                        sort = Sort.by(entityField).ascending();
+                    } else if ("desc".equalsIgnoreCase(sortDir)) {
+                        sort = Sort.by(entityField).descending();
+                    } else {
+                        // No sort (normal state) - use default
+                        sort = Sort.by("createdAt").descending();
+                    }
+                } else {
+                    sort = Sort.by("createdAt").descending();
+                }
+            } else {
+                sort = Sort.by("createdAt").descending();
+            }
+            
+            Pageable pageable = PageRequest.of(page, size, sort);
             Page<BookDto> bookPage;
 
             if (keyword != null && !keyword.trim().isEmpty()) {
@@ -93,6 +114,8 @@ public class AdminBookController {
             model.addAttribute("currentPage", page);
             model.addAttribute("totalPages", bookPage.getTotalPages());
             model.addAttribute("totalItems", bookPage.getTotalElements());
+            model.addAttribute("sortBy", sortBy);
+            model.addAttribute("sortDir", sortDir);
 
             // Add genres for filter dropdown
             List<GenreDto> genres = genreService.getAllGenres();
@@ -104,6 +127,20 @@ public class AdminBookController {
             model.addAttribute("error", "Failed to load books");
             return "admin/books/list";
         }
+    }
+    
+    /**
+     * Map UI sort field names to entity field names.
+     * Note: Rating sorting requires custom query as it's calculated from reviews.
+     */
+    private String mapSortField(String sortBy) {
+        return switch (sortBy.toLowerCase()) {
+            case "title" -> "title";
+            case "price" -> "bookDetail.price";
+            case "stock" -> "bookDetail.quantity";
+            // Rating would need a custom query with JOIN and AVG - skipping for now
+            default -> null;
+        };
     }
 
     /**

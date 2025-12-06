@@ -10,7 +10,7 @@
         <!-- Page Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h2 class="mb-1">📚 Book Management</h2>
+                <h2 class="mb-1">Book Management</h2>
                 <p class="text-muted mb-0">Manage your book catalog</p>
             </div>
             <a th:href="@{/admin/books/new}" class="btn btn-primary">
@@ -62,11 +62,55 @@
                         <thead class="table-light">
                             <tr>
                                 <th style="width: 80px;">Image</th>
-                                <th>Title & Author</th>
+                                <th>
+                                    <a th:href="@{/admin/books(page=${currentPage}, size=${bookPage.size}, keyword=${keyword}, genreId=${genreId}, sortBy=${(sortBy != null and sortBy == 'title' and sortDir == 'desc') ? null : 'title'}, sortDir=${(sortBy != null and sortBy == 'title' and sortDir == 'asc') ? 'desc' : ((sortBy != null and sortBy == 'title' and sortDir == 'desc') ? null : 'asc')})}" 
+                                       class="text-decoration-none text-dark d-flex align-items-center gap-1"
+                                       style="cursor: pointer;">
+                                        Title & Author
+                                        <span th:if="${sortBy != null and sortBy == 'title'}">
+                                            <i th:if="${sortDir == 'asc'}" class="bi bi-arrow-up text-primary"></i>
+                                            <i th:if="${sortDir == 'desc'}" class="bi bi-arrow-down text-primary"></i>
+                                        </span>
+                                        <span th:unless="${sortBy != null and sortBy == 'title'}" class="text-muted">
+                                            <i class="bi bi-arrow-down-up" style="opacity: 0.3;"></i>
+                                        </span>
+                                    </a>
+                                </th>
                                 <th>ISBN</th>
-                                <th>Price</th>
-                                <th>Stock</th>
-                                <th>Rating</th>
+                                <th>
+                                    <a th:href="@{/admin/books(page=${currentPage}, size=${bookPage.size}, keyword=${keyword}, genreId=${genreId}, sortBy=${(sortBy != null and sortBy == 'price' and sortDir == 'desc') ? null : 'price'}, sortDir=${(sortBy != null and sortBy == 'price' and sortDir == 'asc') ? 'desc' : ((sortBy != null and sortBy == 'price' and sortDir == 'desc') ? null : 'asc')})}" 
+                                       class="text-decoration-none text-dark d-flex align-items-center gap-1"
+                                       style="cursor: pointer;">
+                                        Price
+                                        <span th:if="${sortBy != null and sortBy == 'price'}">
+                                            <i th:if="${sortDir == 'asc'}" class="bi bi-arrow-up text-primary"></i>
+                                            <i th:if="${sortDir == 'desc'}" class="bi bi-arrow-down text-primary"></i>
+                                        </span>
+                                        <span th:unless="${sortBy != null and sortBy == 'price'}" class="text-muted">
+                                            <i class="bi bi-arrow-down-up" style="opacity: 0.3;"></i>
+                                        </span>
+                                    </a>
+                                </th>
+                                <th>
+                                    <a th:href="@{/admin/books(page=${currentPage}, size=${bookPage.size}, keyword=${keyword}, genreId=${genreId}, sortBy=${(sortBy != null and sortBy == 'stock' and sortDir == 'desc') ? null : 'stock'}, sortDir=${(sortBy != null and sortBy == 'stock' and sortDir == 'asc') ? 'desc' : ((sortBy != null and sortBy == 'stock' and sortDir == 'desc') ? null : 'asc')})}" 
+                                       class="text-decoration-none text-dark d-flex align-items-center gap-1"
+                                       style="cursor: pointer;">
+                                        Stock
+                                        <span th:if="${sortBy != null and sortBy == 'stock'}">
+                                            <i th:if="${sortDir == 'asc'}" class="bi bi-arrow-up text-primary"></i>
+                                            <i th:if="${sortDir == 'desc'}" class="bi bi-arrow-down text-primary"></i>
+                                        </span>
+                                        <span th:unless="${sortBy != null and sortBy == 'stock'}" class="text-muted">
+                                            <i class="bi bi-arrow-down-up" style="opacity: 0.3;"></i>
+                                        </span>
+                                    </a>
+                                </th>
+                                <th>
+                                    <span class="text-muted" title="Rating sorting not available">
+                                        Rating
+                                        <i class="bi bi-info-circle" style="opacity: 0.5; font-size: 0.8em;"></i>
+                                    </span>
+                                </th>
                                 <th style="width: 200px;">Actions</th>
                             </tr>
                         </thead>
@@ -167,26 +211,70 @@
                         </span>
                     </div>
                     <nav>
-                        <ul class="pagination mb-0">
+                        <ul class="pagination mb-0 flex-wrap">
                             <!-- Previous -->
                             <li class="page-item" th:classappend="${bookPage.first} ? 'disabled'">
-                                <a class="page-link" th:href="@{/admin/books(page=${currentPage - 1}, size=${bookPage.size}, keyword=${keyword}, genreId=${genreId})}">
+                                <a class="page-link" th:href="@{/admin/books(page=${currentPage - 1}, size=${bookPage.size}, keyword=${keyword}, genreId=${genreId}, sortBy=${sortBy}, sortDir=${sortDir})}">
                                     Previous
                                 </a>
                             </li>
                             
-                            <!-- Page Numbers -->
-                            <li class="page-item" 
-                                th:each="i : ${#numbers.sequence(0, bookPage.totalPages - 1)}"
-                                th:if="${i >= (currentPage - 2) and i <= (currentPage + 2)}"
-                                th:classappend="${i == currentPage} ? 'active'">
-                                <a class="page-link" th:href="@{/admin/books(page=${i}, size=${bookPage.size}, keyword=${keyword}, genreId=${genreId})}" 
-                                   th:text="${i + 1}">1</a>
-                            </li>
+                            <!-- Calculate range -->
+                            <th:block th:with="startPage=${T(java.lang.Math).max(0, currentPage - 2)}, 
+                                               endPage=${T(java.lang.Math).min(bookPage.totalPages - 1, currentPage + 2)}">
+                                <!-- First page (if not in range) -->
+                                <li class="page-item" th:if="${startPage > 1}"
+                                    th:classappend="${currentPage == 0} ? 'active'">
+                                    <a class="page-link" th:href="@{/admin/books(page=0, size=${bookPage.size}, keyword=${keyword}, genreId=${genreId}, sortBy=${sortBy}, sortDir=${sortDir})}">1</a>
+                                </li>
+                                
+                                <!-- Show page 1 when startPage = 1 (loop starts at page 2) -->
+                                <li class="page-item" th:if="${startPage == 1}"
+                                    th:classappend="${currentPage == 0} ? 'active'">
+                                    <a class="page-link" th:href="@{/admin/books(page=0, size=${bookPage.size}, keyword=${keyword}, genreId=${genreId}, sortBy=${sortBy}, sortDir=${sortDir})}">1</a>
+                                </li>
+                                
+                                <!-- Ellipsis before range -->
+                                <li class="page-item" th:if="${startPage > 1}">
+                                    <span class="page-link" 
+                                          style="cursor: pointer;" 
+                                          th:data-total-pages="${bookPage.totalPages}"
+                                          th:data-base-url="@{/admin/books(size=${bookPage.size}, keyword=${keyword}, genreId=${genreId}, sortBy=${sortBy}, sortDir=${sortDir})}"
+                                          onclick="showPageInput(this)">
+                                        ...
+                                    </span>
+                                </li>
+                                
+                                <!-- Pages in range -->
+                                <li class="page-item" 
+                                    th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                                    th:classappend="${i == currentPage} ? 'active'">
+                                    <a class="page-link" th:href="@{/admin/books(page=${i}, size=${bookPage.size}, keyword=${keyword}, genreId=${genreId}, sortBy=${sortBy}, sortDir=${sortDir})}" 
+                                       th:text="${i + 1}">1</a>
+                                </li>
+                                
+                                <!-- Ellipsis after range -->
+                                <li class="page-item" th:if="${endPage < bookPage.totalPages - 2}">
+                                    <span class="page-link" 
+                                          style="cursor: pointer;" 
+                                          th:data-total-pages="${bookPage.totalPages}"
+                                          th:data-base-url="@{/admin/books(size=${bookPage.size}, keyword=${keyword}, genreId=${genreId}, sortBy=${sortBy}, sortDir=${sortDir})}"
+                                          onclick="showPageInput(this)">
+                                        ...
+                                    </span>
+                                </li>
+                                
+                                <!-- Last page (if not in range) -->
+                                <li class="page-item" th:if="${endPage < bookPage.totalPages - 1}"
+                                    th:classappend="${currentPage == bookPage.totalPages - 1} ? 'active'">
+                                    <a class="page-link" th:href="@{/admin/books(page=${bookPage.totalPages - 1}, size=${bookPage.size}, keyword=${keyword}, genreId=${genreId}, sortBy=${sortBy}, sortDir=${sortDir})}" 
+                                       th:text="${bookPage.totalPages}">1</a>
+                                </li>
+                            </th:block>
                             
                             <!-- Next -->
                             <li class="page-item" th:classappend="${bookPage.last} ? 'disabled'">
-                                <a class="page-link" th:href="@{/admin/books(page=${currentPage + 1}, size=${bookPage.size}, keyword=${keyword}, genreId=${genreId})}">
+                                <a class="page-link" th:href="@{/admin/books(page=${currentPage + 1}, size=${bookPage.size}, keyword=${keyword}, genreId=${genreId}, sortBy=${sortBy}, sortDir=${sortDir})}">
                                     Next
                                 </a>
                             </li>
@@ -196,6 +284,66 @@
             </div>
         </div>
     </div>
-</body>
-</html>
+</div>
+
+<th:block layout:fragment="extra-js">
+<script>
+function showPageInput(element) {
+    const totalPages = parseInt(element.getAttribute('data-total-pages'));
+    const baseUrl = element.getAttribute('data-base-url');
+    const parentLi = element.parentElement;
+    
+    // Create input field
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.min = '1';
+    input.max = totalPages.toString();
+    input.className = 'form-control form-control-sm';
+    input.style.width = '60px';
+    input.style.display = 'inline-block';
+    input.style.textAlign = 'center';
+    input.placeholder = '...';
+    input.value = '';
+    
+    // Replace span with input
+    const span = element;
+    span.style.display = 'none';
+    parentLi.appendChild(input);
+    input.focus();
+    input.select();
+    
+    // Handle Enter key
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            const pageNum = parseInt(input.value);
+            
+            // Validation
+            if (isNaN(pageNum) || pageNum < 1 || pageNum > totalPages) {
+                alert(`Please enter a valid page number between 1 and ${totalPages}.`);
+                input.focus();
+                input.select();
+                return;
+            }
+            
+            // Navigate to the page (page is 0-indexed in Spring)
+            const targetPage = pageNum - 1;
+            const url = baseUrl + (baseUrl.includes('?') ? '&' : '?') + 'page=' + targetPage;
+            window.location.href = url;
+        } else if (e.key === 'Escape') {
+            // Cancel - restore ellipsis
+            input.remove();
+            span.style.display = '';
+        }
+    });
+    
+    // Handle blur (click outside) - restore ellipsis if empty
+    input.addEventListener('blur', function() {
+        if (input.value === '') {
+            input.remove();
+            span.style.display = '';
+        }
+    });
+}
+</script>
+</th:block>
 

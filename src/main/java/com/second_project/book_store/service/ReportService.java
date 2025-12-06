@@ -14,9 +14,10 @@ public interface ReportService {
      *
      * @param startDate Start date (inclusive)
      * @param endDate   End date (inclusive)
+     * @param bookId    Optional book ID filter, can be null
      * @return AdminReportDto containing aggregated statistics
      */
-    AdminReportDto getReport(LocalDate startDate, LocalDate endDate);
+    AdminReportDto getReport(LocalDate startDate, LocalDate endDate, Long bookId);
 }
 
 

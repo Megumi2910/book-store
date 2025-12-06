@@ -12,7 +12,7 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
-            <a class="navbar-brand" th:href="@{/}">📚 Book Store</a>
+            <a class="navbar-brand" th:href="@{/}">Book Store</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -76,8 +76,8 @@
         <!-- Page Header -->
         <div class="row mb-4">
             <div class="col-12">
-                <h1 class="mb-2" th:text="${popular != null and popular} ? '🔥 Popular Books' : '📖 Browse Books'">Browse Books</h1>
-                <p class="text-muted" th:text="${popular != null and popular} ? 'Our most popular books' : 'Discover our collection'">Discover our collection</p>
+                <h1 class="mb-2" th:text="${popular != null and popular} ? '🔥 Popular Books' : (${recent != null and recent} ? '🆕 Recently Added' : '📖 Browse Books')">Browse Books</h1>
+                <p class="text-muted" th:text="${popular != null and popular} ? 'Our most popular books' : (${recent != null and recent} ? 'Our newest additions' : 'Discover our collection')">Discover our collection</p>
             </div>
         </div>
 
