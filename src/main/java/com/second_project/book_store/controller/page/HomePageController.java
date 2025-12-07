@@ -71,9 +71,9 @@ public class HomePageController {
             model.addAttribute("isAuthenticated", false);
         }
 
-        // Get recently added books for carousel (limited to 8 for clean responsive layout)
-        // This ensures perfect fit: Small screens (2/page=4 dots), Large screens (4/page=2 dots)
-        List<BookDto> recentlyAddedBooks = bookService.getRecentlyAddedBooks(8);
+        // Get recently added books for carousel (limited to 10 for better content display)
+        // Responsive dots will be calculated dynamically based on screen size
+        List<BookDto> recentlyAddedBooks = bookService.getRecentlyAddedBooks(10);
         model.addAttribute("recentlyAddedBooks", recentlyAddedBooks);
 
         // Get popular books (for 3-row grid - 9 books)

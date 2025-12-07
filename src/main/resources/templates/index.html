@@ -11,49 +11,46 @@
         .book-card {
             min-width: 200px;
             max-width: 200px;
-        }
-        .horizontal-scroll {
-            overflow-x: auto;
-            overflow-y: hidden;
-            white-space: nowrap;
-            -webkit-overflow-scrolling: touch;
-            scroll-behavior: smooth;
-            /* Hide scrollbar */
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none; /* IE and Edge */
-        }
-        .horizontal-scroll::-webkit-scrollbar {
-            display: none; /* Chrome, Safari, Opera */
-        }
-        .book-card-inline {
-            display: inline-block;
-            vertical-align: top;
-            white-space: normal;
-            margin-right: 15px;
+            width: 200px !important; /* Fixed width to prevent overflow */
+            box-sizing: border-box; /* Include padding/border in width */
+            flex-shrink: 0; /* Prevent cards from shrinking */
+            overflow: hidden; /* Prevent card content from overflowing */
+            margin: 0; /* Ensure no margin on cards */
         }
         .carousel-wrapper {
             position: relative;
-            overflow: hidden;
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden; /* Prevent wrapper overflow */
         }
         .carousel-viewport {
             overflow: hidden;
-            width: 100%;
             position: relative;
+            margin: 0 auto;
+            padding: 0; /* Ensure no padding cuts off left side */
+            /* Exact width to fit the number of books displayed - clean like Hako */
         }
-        /* Responsive viewport widths for exact book display */
+        /* Responsive viewport widths - exact fit for number of books */
         @media (max-width: 767px) {
             .carousel-viewport {
-                width: calc(2 * 200px + 1 * 15px); /* 2 books + 1 margin */
+                width: calc(2 * 200px + 1 * 15px); /* Exactly 2 books + 1 margin = 415px */
+                max-width: 100%;
             }
         }
         @media (min-width: 768px) and (max-width: 1199px) {
             .carousel-viewport {
-                width: calc(3 * 200px + 2 * 15px); /* 3 books + 2 margins */
+                width: calc(3 * 200px + 2 * 15px); /* Exactly 3 books + 2 margins = 630px */
+                max-width: 100%;
             }
         }
         @media (min-width: 1200px) {
             .carousel-viewport {
-                width: calc(4 * 200px + 3 * 15px); /* 4 books + 3 margins */
+                width: calc(4 * 200px + 3 * 15px); /* Exactly 4 books + 3 margins = 845px */
+                max-width: 100%;
             }
         }
         .horizontal-scroll {
@@ -62,6 +59,12 @@
             white-space: nowrap;
             -webkit-overflow-scrolling: touch;
             scroll-behavior: smooth;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            position: relative;
+            padding: 0; /* Remove any padding that might cut off left side */
+            margin: 0; /* Remove any margin */
             /* Removed scroll-snap-type for better performance */
             /* Hide scrollbar */
             scrollbar-width: none; /* Firefox */
@@ -75,13 +78,20 @@
             vertical-align: top;
             white-space: normal;
             margin-right: 15px;
+            margin-left: 0; /* Ensure no left margin */
+            flex-shrink: 0; /* Prevent cards from shrinking */
+            box-sizing: border-box;
             /* Removed scroll-snap-align for better performance */
+        }
+        .book-card-inline:first-child {
+            margin-left: 0; /* Explicitly ensure first item has no left margin */
         }
         .carousel-dots {
             display: flex;
             justify-content: center;
             gap: 10px;
-            margin-top: 15px;
+            margin-top: 20px;
+            padding-top: 10px;
         }
         .carousel-dot {
             width: 12px;
@@ -152,18 +162,18 @@
         </div>
 
         <!-- Recently Added Books (Horizontal Scroll) -->
-        <div class="mb-5" th:if="${recentlyAddedBooks != null and !recentlyAddedBooks.empty}">
+        <div class="mb-5" th:if="${recentlyAddedBooks != null and !recentlyAddedBooks.empty}" style="overflow-x: clip; overflow-y: visible; width: 100%; max-width: 100%; position: relative;">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h3>Recently Added</h3>
                 <a th:href="@{/books(recent=true)}" class="btn btn-outline-primary">
                     See More <i class="bi bi-arrow-right ms-1"></i>
                 </a>
             </div>
-            <div class="carousel-wrapper">
+            <div class="carousel-wrapper" style="width: 100%; max-width: 100%;">
                 <div class="carousel-viewport">
-                    <div class="horizontal-scroll pb-3" id="recentlyAddedCarousel">
-                        <div th:each="book : ${recentlyAddedBooks}" class="book-card-inline">
-                        <div class="card book-card shadow-sm">
+                    <div class="horizontal-scroll" id="recentlyAddedCarousel" style="padding-bottom: 1rem;">
+                        <div th:each="book : ${recentlyAddedBooks}" class="book-card-inline" style="margin-left: 0;">
+                        <div class="card book-card shadow-sm" style="margin: 0;">
                             <div class="position-relative">
                                 <a th:href="@{/books/{id}(id=${book.bookId})}">
                                     <img th:src="${book.imageUrl != null ? book.imageUrl : '/images/placeholder.jpg'}" 
@@ -333,58 +343,118 @@
             const CARD_WIDTH = 200; // Fixed card width
             const CARD_MARGIN = 15; // Margin between cards
             const CARD_TOTAL_WIDTH = CARD_WIDTH + CARD_MARGIN;
-            const TOTAL_BOOKS = 8; // Fixed limit: 8 books total
+            
+            // Get actual number of books from DOM
+            function getTotalBooks() {
+                const bookCards = carousel.querySelectorAll('.book-card-inline');
+                return bookCards.length;
+            }
             
             let dots = [];
             let visibleBooks = 2; // Default: 2 books per page (small screens)
-            let totalDots = 4; // Default: 4 dots (small screens)
+            let totalDots = 5; // Default: 5 dots (small screens with 10 books)
             let scrollPositions = []; // Pre-calculated scroll positions for each dot
             let resizeTimeout;
+            let currentActiveDot = -1; // Cache the active dot index
             
-            // Function to determine configuration based on screen width (hako-style)
-            // Small screens: 2 books per page = 4 dots
-            // Medium screens: 3 books per page = 3 dots
-            // Large screens: 4 books per page = 2 dots
+            // Function to determine configuration based on screen width
+            // Dynamically calculates dots based on total books and visible books per screen
             function getConfiguration() {
                 const width = window.innerWidth;
+                const totalBooks = getTotalBooks();
+                
                 if (width < 768) {
-                    return { visible: 2, dots: 4 }; // Mobile: 2 books, 4 dots
+                    // Mobile: 2 books visible
+                    const visible = 2;
+                    const maxPages = Math.ceil(totalBooks / visible);
+                    // Use optimal number of dots (typically 4-6 for good UX)
+                    const dots = Math.min(maxPages, Math.max(4, Math.ceil(totalBooks / visible)));
+                    return { visible: visible, dots: dots };
                 } else if (width < 1200) {
-                    return { visible: 3, dots: 3 }; // Tablet: 3 books, 3 dots
+                    // Tablet: 3 books visible
+                    const visible = 3;
+                    const maxPages = Math.ceil(totalBooks / visible);
+                    const dots = Math.min(maxPages, Math.max(3, Math.ceil(totalBooks / visible)));
+                    return { visible: visible, dots: dots };
                 } else {
-                    return { visible: 4, dots: 2 }; // Desktop: 4 books, 2 dots
+                    // Desktop: 4 books visible
+                    const visible = 4;
+                    const maxPages = Math.ceil(totalBooks / visible);
+                    const dots = Math.min(maxPages, Math.max(2, Math.ceil(totalBooks / visible)));
+                    return { visible: visible, dots: dots };
                 }
             }
             
-            // Calculate scroll positions for dots (exact book boundaries)
-            // Each dot shows exactly N complete books with no overlapping
-            function calculateScrollPositions() {
-                scrollPositions = [];
-                
-                // Calculate how many pages we can have with exact book counts
-                const maxPages = Math.ceil(TOTAL_BOOKS / visibleBooks);
-                
-                // Create scroll positions that align with book boundaries
-                // Each position shows exactly 'visibleBooks' complete books
-                for (let i = 0; i < totalDots; i++) {
-                    // Calculate which book index to start from for this dot
-                    // Distribute dots across available pages
-                    const pageIndex = Math.floor((maxPages / totalDots) * i);
-                    const bookIndex = Math.min(pageIndex * visibleBooks, TOTAL_BOOKS - visibleBooks);
-                    const position = bookIndex * CARD_TOTAL_WIDTH;
-                    scrollPositions.push(Math.max(0, position));
-                }
-            }
-            
-            // Function to update viewport width to show exactly N books
-            function updateViewportWidth() {
-                const viewport = carousel.parentElement; // carousel-viewport
-                if (viewport) {
-                    const width = (visibleBooks * CARD_WIDTH) + ((visibleBooks - 1) * CARD_MARGIN);
-                    viewport.style.width = width + 'px';
-                    viewport.style.maxWidth = width + 'px';
-                }
-            }
+             // Calculate scroll positions for dots (aligned to card boundaries)
+             // Each dot represents a specific card index that should be visible at the leftmost position
+             function calculateScrollPositions() {
+                 scrollPositions = [];
+                 const totalBooks = getTotalBooks();
+                 
+                 if (totalBooks === 0) {
+                     return;
+                 }
+                 
+                 // If all books fit in viewport, only one position (0)
+                 if (totalBooks <= visibleBooks) {
+                     scrollPositions.push(0);
+                     return;
+                 }
+                 
+                 // Calculate maximum card index that can be shown at leftmost position
+                 // Maximum card index = totalBooks - visibleBooks
+                 // This ensures the last visibleBooks cards are fully visible
+                 const maxCardIndex = totalBooks - visibleBooks;
+                 
+                 // Calculate maximum scroll position (aligned to card boundary)
+                 // This is the position where the last card that can be shown at leftmost is aligned
+                 // This ensures no partial cards are visible
+                 let finalMaxScrollLeft = maxCardIndex * CARD_TOTAL_WIDTH;
+                 
+                 // Get actual scrollable width from DOM for validation (if available)
+                 // Only use it if scrollWidth is properly calculated
+                 if (carousel.scrollWidth > 0 && carousel.clientWidth > 0) {
+                     const actualMaxScroll = carousel.scrollWidth - carousel.clientWidth;
+                     
+                     // Clamp to actual scrollable area, but ensure we stay aligned to card boundaries
+                     // Round down to nearest card boundary to prevent showing partial cards
+                     if (finalMaxScrollLeft > actualMaxScroll) {
+                         const maxValidCardIndex = Math.floor(actualMaxScroll / CARD_TOTAL_WIDTH);
+                         // Use the smaller of calculated max or valid max from actual scroll
+                         finalMaxScrollLeft = Math.min(maxValidCardIndex * CARD_TOTAL_WIDTH, finalMaxScrollLeft);
+                     }
+                 }
+                 
+                 // Ensure finalMaxScrollLeft is never negative
+                 finalMaxScrollLeft = Math.max(0, finalMaxScrollLeft);
+                 
+                 if (totalDots <= 1) {
+                     scrollPositions.push(0);
+                     return;
+                 }
+                 
+                 // Calculate which card indices should be visible for each dot
+                 // Distribute dots evenly across available card positions
+                 for (let i = 0; i < totalDots; i++) {
+                     if (i === 0) {
+                         // First dot: show first card (position 0)
+                         scrollPositions.push(0);
+                     } else if (i === totalDots - 1) {
+                         // Last dot: show last possible card (aligned to card boundary)
+                         // Use finalMaxScrollLeft which is clamped and aligned
+                         scrollPositions.push(finalMaxScrollLeft);
+                     } else {
+                         // Intermediate dots: calculate card index, then align to boundary
+                         // Distribute evenly across available card positions
+                         const cardIndex = Math.round((maxCardIndex / (totalDots - 1)) * i);
+                         // Ensure cardIndex doesn't exceed maxCardIndex
+                         const safeCardIndex = Math.min(cardIndex, maxCardIndex);
+                         // Align to exact card boundary
+                         const position = safeCardIndex * CARD_TOTAL_WIDTH;
+                         scrollPositions.push(position);
+                     }
+                 }
+             }
             
             // Function to initialize or update dots
             function initializeDots() {
@@ -400,67 +470,99 @@
                 visibleBooks = newVisibleBooks;
                 totalDots = newTotalDots;
                 
-                // Update viewport width to show exactly N books
-                updateViewportWidth();
+                // Viewport width is now handled by CSS with exact fit (like Hako)
                 
                 // Clear existing dots
                 dotsContainer.innerHTML = '';
                 dots = [];
+                currentActiveDot = -1; // Reset cached active dot
+                
+                // Hide dots if only one page
+                if (totalDots <= 1) {
+                dotsContainer.style.display = 'none';
+                return;
+            }
                 
                 // Show dots
                 dotsContainer.style.display = 'flex';
                 
-                // Create dots
+                // Calculate scroll positions first (needed for proper initialization)
+                calculateScrollPositions();
+            
+            // Create dots
                 for (let i = 0; i < totalDots; i++) {
-                    const dot = document.createElement('div');
-                    dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
-                    dot.setAttribute('data-page', i);
-                    dot.setAttribute('aria-label', 'Go to page ' + (i + 1));
+                const dot = document.createElement('div');
+                dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+                dot.setAttribute('data-page', i);
+                dot.setAttribute('aria-label', 'Go to page ' + (i + 1));
                     dot.addEventListener('click', function() {
                         goToPage(i);
                     });
-                    dotsContainer.appendChild(dot);
+                dotsContainer.appendChild(dot);
                     dots.push(dot);
                 }
                 
-                // Calculate scroll positions
-                calculateScrollPositions();
+                // Set initial active dot
+                currentActiveDot = 0;
             }
             
-            // Function to scroll to a specific dot position with smooth animation
-            function goToPage(dotIndex) {
-                if (dotIndex < 0 || dotIndex >= scrollPositions.length) return;
-                
-                const targetPosition = scrollPositions[dotIndex];
-                const startPosition = carousel.scrollLeft;
-                const distance = targetPosition - startPosition;
-                const duration = 600; // Smooth animation
-                let startTime = null;
-                
-                function animateScroll(currentTime) {
-                    if (startTime === null) startTime = currentTime;
-                    const timeElapsed = currentTime - startTime;
-                    const progress = Math.min(timeElapsed / duration, 1);
-                    
-                    // Easing function (ease-in-out)
-                    const ease = progress < 0.5 
-                        ? 2 * progress * progress 
-                        : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-                    
-                    carousel.scrollLeft = startPosition + distance * ease;
-                    
-                    if (timeElapsed < duration) {
-                        requestAnimationFrame(animateScroll);
-                    } else {
-                        updateActiveDot();
-                    }
-                }
-                
-                requestAnimationFrame(animateScroll);
-            }
-            
-            // Optimized: Cache current active dot to avoid unnecessary DOM updates
-            let currentActiveDot = 0;
+             // Function to scroll to a specific dot position with smooth animation
+             // Always scrolls to exact card-aligned position
+             function goToPage(dotIndex) {
+                 if (dotIndex < 0 || dotIndex >= scrollPositions.length) return;
+             
+                 // Get the target position (already aligned to card boundary)
+                 let targetPosition = scrollPositions[dotIndex];
+                 
+                 // Ensure it's exactly aligned to card boundary (safety check)
+                 // Use Math.floor for last dot to prevent exceeding bounds, Math.round for others
+                 const totalBooks = getTotalBooks();
+                 const maxCardIndex = totalBooks - visibleBooks;
+                 const cardIndex = dotIndex === scrollPositions.length - 1 
+                     ? Math.floor(targetPosition / CARD_TOTAL_WIDTH)  // Last dot: floor to prevent exceeding
+                     : Math.round(targetPosition / CARD_TOTAL_WIDTH); // Others: round for best alignment
+                 
+                 // Ensure cardIndex doesn't exceed maximum
+                 const safeCardIndex = Math.min(cardIndex, maxCardIndex);
+                 targetPosition = safeCardIndex * CARD_TOTAL_WIDTH;
+                 
+                 // Clamp to actual scrollable area if available
+                 if (carousel.scrollWidth > 0 && carousel.clientWidth > 0) {
+                     const actualMaxScroll = carousel.scrollWidth - carousel.clientWidth;
+                     targetPosition = Math.min(targetPosition, actualMaxScroll);
+                     // Re-align to card boundary after clamping
+                     const clampedCardIndex = Math.floor(targetPosition / CARD_TOTAL_WIDTH);
+                     targetPosition = clampedCardIndex * CARD_TOTAL_WIDTH;
+                 }
+                 
+                 const startPosition = carousel.scrollLeft;
+                 const distance = targetPosition - startPosition;
+                 const duration = 600; // Smooth animation
+                 let startTime = null;
+                 
+                 function animateScroll(currentTime) {
+                     if (startTime === null) startTime = currentTime;
+                     const timeElapsed = currentTime - startTime;
+                     const progress = Math.min(timeElapsed / duration, 1);
+                     
+                     // Easing function (ease-in-out)
+                     const ease = progress < 0.5 
+                         ? 2 * progress * progress 
+                         : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+                     
+                     carousel.scrollLeft = startPosition + distance * ease;
+                     
+                     if (timeElapsed < duration) {
+                         requestAnimationFrame(animateScroll);
+                     } else {
+                         // Ensure final position is exactly aligned to card boundary
+                         carousel.scrollLeft = targetPosition;
+                         updateActiveDot();
+                     }
+                 }
+                 
+                 requestAnimationFrame(animateScroll);
+             }
             
             // Optimized: Find closest dot (lightweight calculation)
             function findClosestDot(scrollPosition) {
@@ -492,43 +594,74 @@
                 }
             }
             
-            // Function to snap to nearest position (only called when scrolling stops)
-            function snapToNearest() {
-                if (scrollPositions.length === 0) return;
-                
-                const scrollPosition = carousel.scrollLeft;
-                const closestDot = findClosestDot(scrollPosition);
-                const targetPosition = scrollPositions[closestDot];
-                const distance = Math.abs(scrollPosition - targetPosition);
-                
-                // Snap to exact position if not already there (threshold: 20px)
-                if (distance > 20) {
-                    // Smooth scroll to nearest position
-                    const startPosition = carousel.scrollLeft;
-                    const scrollDistance = targetPosition - startPosition;
-                    const duration = 250; // Faster snap
-                    let startTime = null;
-                    
-                    function animateSnap(currentTime) {
-                        if (startTime === null) startTime = currentTime;
-                        const timeElapsed = currentTime - startTime;
-                        const progress = Math.min(timeElapsed / duration, 1);
-                        
-                        // Simple ease-out
-                        const ease = 1 - Math.pow(1 - progress, 3);
-                        
-                        carousel.scrollLeft = startPosition + scrollDistance * ease;
-                        
-                        if (timeElapsed < duration) {
-                            requestAnimationFrame(animateSnap);
-                        } else {
-                            updateActiveDot();
-                        }
-                    }
-                    
-                    requestAnimationFrame(animateSnap);
-                }
-            }
+            // Track if carousel has been initialized to prevent snap on load
+            let isInitialized = false;
+            
+             // Function to snap to nearest position (only called when scrolling stops)
+             // Always snaps to card-aligned positions
+             function snapToNearest() {
+                 if (scrollPositions.length === 0) return;
+                 
+                 // Don't snap if not initialized yet (prevents moving away from position 0 on load)
+                 if (!isInitialized) return;
+                 
+                 const scrollPosition = carousel.scrollLeft;
+                 
+                 // Find the nearest card-aligned position
+                 // First, try to find the closest dot position
+                 const closestDot = findClosestDot(scrollPosition);
+                 let targetPosition = scrollPositions[closestDot];
+                 
+                 // Also check if we should snap to a card boundary between dots
+                 // Calculate which card index we're closest to
+                 const nearestCardIndex = Math.round(scrollPosition / CARD_TOTAL_WIDTH);
+                 const nearestCardPosition = nearestCardIndex * CARD_TOTAL_WIDTH;
+                 
+                 // Use whichever is closer: the dot position or the card-aligned position
+                 const distanceToDot = Math.abs(scrollPosition - targetPosition);
+                 const distanceToCard = Math.abs(scrollPosition - nearestCardPosition);
+                 
+                 // Ensure the card position is within valid scroll range
+                 const maxScrollLeft = carousel.scrollWidth - carousel.clientWidth;
+                 if (distanceToCard < distanceToDot && nearestCardPosition >= 0 && nearestCardPosition <= maxScrollLeft) {
+                     targetPosition = nearestCardPosition;
+                 }
+                 
+                 const distance = Math.abs(scrollPosition - targetPosition);
+                 
+                 // Don't snap if we're at position 0 (first book)
+                 if (scrollPosition === 0 && targetPosition === 0) return;
+                 
+                 // Snap to exact position if not already there (threshold: 20px)
+                 if (distance > 20) {
+                     // Smooth scroll to nearest position
+                     const startPosition = carousel.scrollLeft;
+                     const scrollDistance = targetPosition - startPosition;
+                     const duration = 250; // Faster snap
+                     let startTime = null;
+                     
+                     function animateSnap(currentTime) {
+                         if (startTime === null) startTime = currentTime;
+                         const timeElapsed = currentTime - startTime;
+                         const progress = Math.min(timeElapsed / duration, 1);
+                         
+                         // Simple ease-out
+                         const ease = 1 - Math.pow(1 - progress, 3);
+                         
+                         carousel.scrollLeft = startPosition + scrollDistance * ease;
+                         
+                         if (timeElapsed < duration) {
+                             requestAnimationFrame(animateSnap);
+                         } else {
+                             // Ensure final position is exactly aligned
+                             carousel.scrollLeft = targetPosition;
+                             updateActiveDot();
+                         }
+                     }
+                     
+                     requestAnimationFrame(animateSnap);
+                 }
+             }
             
             // Optimized: Use requestAnimationFrame to throttle scroll events
             let rafId = null;
@@ -555,9 +688,37 @@
                 }, 200); // Slightly longer delay for better UX
             }
             
-            // Initialize on load
-            initializeDots();
-            updateActiveDot();
+            // Initialize on load - wait for layout to be ready
+            function initializeCarousel() {
+                // Wait for next frame to ensure layout is calculated
+                requestAnimationFrame(function() {
+                    // Set scroll position to 0 BEFORE any other operations
+                    carousel.scrollLeft = 0;
+                    
+                    initializeDots();
+                    
+                    // Recalculate scroll positions after a brief delay to ensure scrollWidth is accurate
+                    setTimeout(function() {
+                        // Ensure first scroll position is exactly 0
+                        calculateScrollPositions();
+                        if (scrollPositions.length > 0) {
+                            scrollPositions[0] = 0; // Force first position to be 0
+                        }
+                        
+                        // Force scroll to position 0 and prevent any snapping
+                        carousel.scrollLeft = 0;
+                        currentActiveDot = 0;
+                        updateActiveDot();
+                        
+                        // Mark as initialized after a delay to allow user interaction
+                        setTimeout(function() {
+                            isInitialized = true;
+                        }, 500);
+                    }, 100);
+                });
+            }
+            
+            initializeCarousel();
             
             // Update active dot on scroll (optimized with RAF throttling)
             carousel.addEventListener('scroll', handleScroll, { passive: true });
@@ -568,11 +729,18 @@
                 resizeTimeout = setTimeout(function() {
                     const oldConfig = { visible: visibleBooks, dots: totalDots };
                     initializeDots();
-                    // If configuration changed, reset to first page
-                    if (oldConfig.visible !== visibleBooks || oldConfig.dots !== totalDots) {
-                        carousel.scrollLeft = 0;
-                    }
-                    updateActiveDot();
+                    // Recalculate scroll positions after resize
+                    requestAnimationFrame(function() {
+                        setTimeout(function() {
+                            calculateScrollPositions();
+                            // If configuration changed, reset to first page
+                            if (oldConfig.visible !== visibleBooks || oldConfig.dots !== totalDots) {
+                                carousel.scrollLeft = 0;
+                                currentActiveDot = -1;
+                            }
+                            updateActiveDot();
+                        }, 50);
+                    });
                 }, 250);
             });
         });

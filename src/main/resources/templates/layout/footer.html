@@ -69,7 +69,109 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Scroll to Top Button (inside footer but fixed positioned) -->
+        <button id="scrollToTopBtn" class="btn btn-primary rounded-circle shadow-lg" 
+                type="button" 
+                aria-label="Scroll to top">
+            <i class="bi bi-arrow-up"></i>
+        </button>
+        
+        <style>
+            #scrollToTopBtn {
+                position: fixed;
+                bottom: 30px;
+                right: 30px;
+                width: 50px;
+                height: 50px;
+                z-index: 1000;
+                border: none;
+                opacity: 0;
+                transform: translateY(20px);
+                pointer-events: none;
+                transition: opacity 0.3s, transform 0.3s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            #scrollToTopBtn.show {
+                opacity: 1;
+                transform: translateY(0);
+                pointer-events: auto;
+            }
+            
+            #scrollToTopBtn:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2) !important;
+            }
+            
+            #scrollToTopBtn:active {
+                transform: translateY(0);
+            }
+            
+            #scrollToTopBtn i {
+                font-size: 1.2rem;
+            }
+            
+            @media (max-width: 768px) {
+                #scrollToTopBtn {
+                    bottom: 20px;
+                    right: 20px;
+                    width: 45px;
+                    height: 45px;
+                }
+            }
+        </style>
+        
+        <script>
+            (function() {
+                function initScrollToTop() {
+                    const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+                    
+                    if (!scrollToTopBtn) {
+                        return; // Button not found, exit
+                    }
+                    
+                    // Show/hide button based on scroll position
+                    function toggleScrollButton() {
+                        if (window.pageYOffset > 300 || document.documentElement.scrollTop > 300) {
+                            scrollToTopBtn.classList.add('show');
+                        } else {
+                            scrollToTopBtn.classList.remove('show');
+                        }
+                    }
+                    
+                    // Scroll to top function
+                    scrollToTopBtn.addEventListener('click', function() {
+                        window.scrollTo({
+                            top: 0,
+                            behavior: 'smooth'
+                        });
+                    });
+                    
+                    // Listen to scroll events
+                    window.addEventListener('scroll', toggleScrollButton);
+                    
+                    // Initial check
+                    toggleScrollButton();
+                }
+                
+                // Try to initialize when DOM is ready
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', initScrollToTop);
+                } else {
+                    // DOM is already ready
+                    initScrollToTop();
+                }
+            })();
+        </script>
     </footer>
+    
+    <!-- Scroll to Top Button Fragment (for base template) -->
+    <div th:fragment="scroll-to-top">
+        <!-- This fragment is included in base.html, but the button is also in footer for direct includes -->
+    </div>
 </body>
 </html>
 
