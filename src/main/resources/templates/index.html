@@ -33,6 +33,49 @@
         }
         .carousel-wrapper {
             position: relative;
+            overflow: hidden;
+        }
+        .carousel-viewport {
+            overflow: hidden;
+            width: 100%;
+            position: relative;
+        }
+        /* Responsive viewport widths for exact book display */
+        @media (max-width: 767px) {
+            .carousel-viewport {
+                width: calc(2 * 200px + 1 * 15px); /* 2 books + 1 margin */
+            }
+        }
+        @media (min-width: 768px) and (max-width: 1199px) {
+            .carousel-viewport {
+                width: calc(3 * 200px + 2 * 15px); /* 3 books + 2 margins */
+            }
+        }
+        @media (min-width: 1200px) {
+            .carousel-viewport {
+                width: calc(4 * 200px + 3 * 15px); /* 4 books + 3 margins */
+            }
+        }
+        .horizontal-scroll {
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+            /* Removed scroll-snap-type for better performance */
+            /* Hide scrollbar */
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+        .horizontal-scroll::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+        .book-card-inline {
+            display: inline-block;
+            vertical-align: top;
+            white-space: normal;
+            margin-right: 15px;
+            /* Removed scroll-snap-align for better performance */
         }
         .carousel-dots {
             display: flex;
@@ -62,52 +105,7 @@
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand" th:href="@{/}">Book Store</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" th:href="@{/books}">Browse Books</a>
-                    </li>
-                    <li class="nav-item" sec:authorize="isAuthenticated()">
-                        <a class="nav-link" th:href="@{/cart}">
-                            🛒 Cart
-                            <span class="badge bg-light text-dark" th:text="${cartItemCount}" th:if="${cartItemCount != null and cartItemCount > 0}">0</span>
-                        </a>
-                    </li>
-                    <li class="nav-item" sec:authorize="isAuthenticated()">
-                        <a class="nav-link" th:href="@{/orders}">My Orders</a>
-                    </li>
-                    <li class="nav-item" sec:authorize="!isAuthenticated()">
-                        <a class="nav-link" th:href="@{/login}">Login</a>
-                    </li>
-                    <li class="nav-item" sec:authorize="!isAuthenticated()">
-                        <a class="nav-link" th:href="@{/register}">Register</a>
-                    </li>
-                    <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            <span th:text="${userName}">User Name</span>
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" th:href="@{/profile}">Profile</a></li>
-                            <li sec:authorize="hasRole('ADMIN')"><a class="dropdown-item" th:href="@{/admin/dashboard}">Admin Dashboard</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <form th:action="@{/logout}" method="post" style="display: inline;">
-                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                    <button type="submit" class="dropdown-item">Logout</button>
-                                </form>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <nav th:replace="~{layout/header :: header}"></nav>
 
     <!-- Verification Notification Banner (for unverified users) -->
     <div class="alert alert-warning alert-dismissible fade show m-0 border-0 rounded-0 text-center" 
@@ -162,27 +160,30 @@
                 </a>
             </div>
             <div class="carousel-wrapper">
-                <div class="horizontal-scroll pb-3" id="recentlyAddedCarousel">
-                    <div th:each="book : ${recentlyAddedBooks}" class="book-card-inline">
+                <div class="carousel-viewport">
+                    <div class="horizontal-scroll pb-3" id="recentlyAddedCarousel">
+                        <div th:each="book : ${recentlyAddedBooks}" class="book-card-inline">
                         <div class="card book-card shadow-sm">
                             <div class="position-relative">
-                                <img th:src="${book.imageUrl != null ? book.imageUrl : '/images/placeholder.jpg'}" 
-                                     class="card-img-top" 
-                                     style="height: 250px; object-fit: cover;"
-                                     th:alt="${book.title}">
+                                <a th:href="@{/books/{id}(id=${book.bookId})}">
+                                    <img th:src="${book.imageUrl != null ? book.imageUrl : '/images/placeholder.jpg'}" 
+                                         class="card-img-top" 
+                                         style="height: 250px; object-fit: cover;"
+                                         th:alt="${book.title}">
+                                </a>
                                 <span th:if="${book.quantity != null and book.quantity == 0}" 
                                       class="badge bg-danger position-absolute top-0 end-0 m-2">
                                     Out of Stock
                                 </span>
                             </div>
                             <div class="card-body">
-                                <h6 class="card-title text-truncate" th:text="${book.title}">Book Title</h6>
+                                <a th:href="@{/books/{id}(id=${book.bookId})}" class="text-decoration-none text-black">
+                                    <h6 class="card-title text-truncate" th:text="${book.title}">Book Title</h6>
+                                </a>
                                 <p class="text-muted small mb-2 text-truncate" th:text="${book.author}">Author</p>
                                 <p class="h6 text-primary mb-2" th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(book.price)}">0 VND</p>
-                                <a th:href="@{/books/{id}(id=${book.bookId})}" class="btn btn-sm btn-primary w-100">
-                                    View Details
-                                </a>
                             </div>
+                        </div>
                         </div>
                     </div>
                 </div>
@@ -203,17 +204,21 @@
                 <div th:each="book : ${popularBooks}" class="col-md-4 mb-4">
                     <div class="card h-100 shadow-sm">
                         <div class="position-relative">
-                            <img th:src="${book.imageUrl != null ? book.imageUrl : '/images/placeholder.jpg'}" 
-                                 class="card-img-top" 
-                                 style="height: 300px; object-fit: cover;"
-                                 th:alt="${book.title}">
+                            <a th:href="@{/books/{id}(id=${book.bookId})}">
+                                <img th:src="${book.imageUrl != null ? book.imageUrl : '/images/placeholder.jpg'}" 
+                                    class="card-img-top" 
+                                    style="height: 300px; object-fit: cover;"
+                                    th:alt="${book.title}">
+                            </a>
                             <span th:if="${book.quantity != null and book.quantity == 0}" 
                                   class="badge bg-danger position-absolute top-0 end-0 m-2">
                                 Out of Stock
                             </span>
                         </div>
                         <div class="card-body d-flex flex-column">
-                            <h5 class="card-title" th:text="${book.title}">Book Title</h5>
+                            <a th:href="@{/books/{id}(id=${book.bookId})}" class="text-decoration-none text-black">
+                                <h5 class="card-title" th:text="${book.title}">Book Title</h5>
+                            </a>    
                             <p class="text-muted mb-2" th:text="${book.author}">Author</p>
                             <p class="card-text flex-grow-1">
                                 <small class="text-muted" th:text="${book.description != null ? (#strings.abbreviate(book.description, 100)) : 'No description available'}">
@@ -222,9 +227,6 @@
                             </p>
                             <div class="mt-auto">
                                 <p class="h5 text-primary mb-2" th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(book.price)}">0 VND</p>
-                                <a th:href="@{/books/{id}(id=${book.bookId})}" class="btn btn-primary w-100">
-                                    View Details
-                                </a>
                             </div>
                         </div>
                     </div>
@@ -328,35 +330,111 @@
                 return; // Elements don't exist, skip initialization
             }
             
-            // Calculate number of pages dynamically based on actual number of books (5 books per page)
-            const booksPerPage = 5;
-            const totalBooks = carousel.querySelectorAll('.book-card-inline').length;
-            const totalPages = Math.ceil(totalBooks / booksPerPage);
+            const CARD_WIDTH = 200; // Fixed card width
+            const CARD_MARGIN = 15; // Margin between cards
+            const CARD_TOTAL_WIDTH = CARD_WIDTH + CARD_MARGIN;
+            const TOTAL_BOOKS = 8; // Fixed limit: 8 books total
             
-            // Only show dots if there's more than one page
-            if (totalPages <= 1) {
-                dotsContainer.style.display = 'none';
-                return;
+            let dots = [];
+            let visibleBooks = 2; // Default: 2 books per page (small screens)
+            let totalDots = 4; // Default: 4 dots (small screens)
+            let scrollPositions = []; // Pre-calculated scroll positions for each dot
+            let resizeTimeout;
+            
+            // Function to determine configuration based on screen width (hako-style)
+            // Small screens: 2 books per page = 4 dots
+            // Medium screens: 3 books per page = 3 dots
+            // Large screens: 4 books per page = 2 dots
+            function getConfiguration() {
+                const width = window.innerWidth;
+                if (width < 768) {
+                    return { visible: 2, dots: 4 }; // Mobile: 2 books, 4 dots
+                } else if (width < 1200) {
+                    return { visible: 3, dots: 3 }; // Tablet: 3 books, 3 dots
+                } else {
+                    return { visible: 4, dots: 2 }; // Desktop: 4 books, 2 dots
+                }
             }
             
-            // Create dots
-            for (let i = 0; i < totalPages; i++) {
-                const dot = document.createElement('div');
-                dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
-                dot.setAttribute('data-page', i);
-                dot.setAttribute('aria-label', 'Go to page ' + (i + 1));
-                dotsContainer.appendChild(dot);
+            // Calculate scroll positions for dots (exact book boundaries)
+            // Each dot shows exactly N complete books with no overlapping
+            function calculateScrollPositions() {
+                scrollPositions = [];
+                
+                // Calculate how many pages we can have with exact book counts
+                const maxPages = Math.ceil(TOTAL_BOOKS / visibleBooks);
+                
+                // Create scroll positions that align with book boundaries
+                // Each position shows exactly 'visibleBooks' complete books
+                for (let i = 0; i < totalDots; i++) {
+                    // Calculate which book index to start from for this dot
+                    // Distribute dots across available pages
+                    const pageIndex = Math.floor((maxPages / totalDots) * i);
+                    const bookIndex = Math.min(pageIndex * visibleBooks, TOTAL_BOOKS - visibleBooks);
+                    const position = bookIndex * CARD_TOTAL_WIDTH;
+                    scrollPositions.push(Math.max(0, position));
+                }
             }
             
-            const dots = dotsContainer.querySelectorAll('.carousel-dot');
-            const cardWidth = 200 + 15; // card width + margin
+            // Function to update viewport width to show exactly N books
+            function updateViewportWidth() {
+                const viewport = carousel.parentElement; // carousel-viewport
+                if (viewport) {
+                    const width = (visibleBooks * CARD_WIDTH) + ((visibleBooks - 1) * CARD_MARGIN);
+                    viewport.style.width = width + 'px';
+                    viewport.style.maxWidth = width + 'px';
+                }
+            }
             
-            // Function to scroll to a specific page with smooth animation
-            function goToPage(pageIndex) {
-                const targetPosition = pageIndex * booksPerPage * cardWidth;
+            // Function to initialize or update dots
+            function initializeDots() {
+                const config = getConfiguration();
+                const newVisibleBooks = config.visible;
+                const newTotalDots = config.dots;
+                
+                // Only update if configuration changed
+                if (newVisibleBooks === visibleBooks && newTotalDots === totalDots && dots.length > 0) {
+                    return;
+                }
+                
+                visibleBooks = newVisibleBooks;
+                totalDots = newTotalDots;
+                
+                // Update viewport width to show exactly N books
+                updateViewportWidth();
+                
+                // Clear existing dots
+                dotsContainer.innerHTML = '';
+                dots = [];
+                
+                // Show dots
+                dotsContainer.style.display = 'flex';
+                
+                // Create dots
+                for (let i = 0; i < totalDots; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+                    dot.setAttribute('data-page', i);
+                    dot.setAttribute('aria-label', 'Go to page ' + (i + 1));
+                    dot.addEventListener('click', function() {
+                        goToPage(i);
+                    });
+                    dotsContainer.appendChild(dot);
+                    dots.push(dot);
+                }
+                
+                // Calculate scroll positions
+                calculateScrollPositions();
+            }
+            
+            // Function to scroll to a specific dot position with smooth animation
+            function goToPage(dotIndex) {
+                if (dotIndex < 0 || dotIndex >= scrollPositions.length) return;
+                
+                const targetPosition = scrollPositions[dotIndex];
                 const startPosition = carousel.scrollLeft;
                 const distance = targetPosition - startPosition;
-                const duration = 1200; // 1200ms for smooth, slow animation
+                const duration = 600; // Smooth animation
                 let startTime = null;
                 
                 function animateScroll(currentTime) {
@@ -364,7 +442,7 @@
                     const timeElapsed = currentTime - startTime;
                     const progress = Math.min(timeElapsed / duration, 1);
                     
-                    // Easing function for smooth animation (ease-in-out)
+                    // Easing function (ease-in-out)
                     const ease = progress < 0.5 
                         ? 2 * progress * progress 
                         : 1 - Math.pow(-2 * progress + 2, 2) / 2;
@@ -373,36 +451,134 @@
                     
                     if (timeElapsed < duration) {
                         requestAnimationFrame(animateScroll);
+                    } else {
+                        updateActiveDot();
                     }
                 }
                 
                 requestAnimationFrame(animateScroll);
             }
             
-            // Function to update active dot based on scroll position
-            function updateActiveDot() {
-                const scrollPosition = carousel.scrollLeft;
-                const currentPage = Math.round(scrollPosition / (booksPerPage * cardWidth));
-                const activePage = Math.min(currentPage, totalPages - 1);
+            // Optimized: Cache current active dot to avoid unnecessary DOM updates
+            let currentActiveDot = 0;
+            
+            // Optimized: Find closest dot (lightweight calculation)
+            function findClosestDot(scrollPosition) {
+                let closestDot = 0;
+                let minDistance = Math.abs(scrollPosition - scrollPositions[0]);
                 
-                dots.forEach((dot, index) => {
-                    dot.classList.toggle('active', index === activePage);
-                });
+                for (let i = 1; i < scrollPositions.length; i++) {
+                    const distance = Math.abs(scrollPosition - scrollPositions[i]);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestDot = i;
+                    }
+                }
+                return closestDot;
             }
             
-            // Add click handlers to dots
-            dots.forEach((dot, index) => {
-                dot.addEventListener('click', function() {
-                    goToPage(index);
+            // Function to update active dot (optimized - only updates if changed)
+            function updateActiveDot() {
+                if (dots.length === 0 || scrollPositions.length === 0) return;
+                
+                const scrollPosition = carousel.scrollLeft;
+                const newActiveDot = findClosestDot(scrollPosition);
+                
+                // Only update DOM if active dot changed
+                if (newActiveDot !== currentActiveDot) {
+                    dots[currentActiveDot]?.classList.remove('active');
+                    dots[newActiveDot]?.classList.add('active');
+                    currentActiveDot = newActiveDot;
+                }
+            }
+            
+            // Function to snap to nearest position (only called when scrolling stops)
+            function snapToNearest() {
+                if (scrollPositions.length === 0) return;
+                
+                const scrollPosition = carousel.scrollLeft;
+                const closestDot = findClosestDot(scrollPosition);
+                const targetPosition = scrollPositions[closestDot];
+                const distance = Math.abs(scrollPosition - targetPosition);
+                
+                // Snap to exact position if not already there (threshold: 20px)
+                if (distance > 20) {
+                    // Smooth scroll to nearest position
+                    const startPosition = carousel.scrollLeft;
+                    const scrollDistance = targetPosition - startPosition;
+                    const duration = 250; // Faster snap
+                    let startTime = null;
+                    
+                    function animateSnap(currentTime) {
+                        if (startTime === null) startTime = currentTime;
+                        const timeElapsed = currentTime - startTime;
+                        const progress = Math.min(timeElapsed / duration, 1);
+                        
+                        // Simple ease-out
+                        const ease = 1 - Math.pow(1 - progress, 3);
+                        
+                        carousel.scrollLeft = startPosition + scrollDistance * ease;
+                        
+                        if (timeElapsed < duration) {
+                            requestAnimationFrame(animateSnap);
+                        } else {
+                            updateActiveDot();
+                        }
+                    }
+                    
+                    requestAnimationFrame(animateSnap);
+                }
+            }
+            
+            // Optimized: Use requestAnimationFrame to throttle scroll events
+            let rafId = null;
+            let scrollTimeout;
+            
+            function handleScroll() {
+                // Cancel previous frame if still pending
+                if (rafId !== null) {
+                    cancelAnimationFrame(rafId);
+                }
+                
+                // Schedule update for next frame
+                rafId = requestAnimationFrame(function() {
+                    updateActiveDot();
+                    rafId = null;
                 });
-            });
+                
+                // Clear existing timeout
+                clearTimeout(scrollTimeout);
+                
+                // Snap after scrolling stops (debounced)
+                scrollTimeout = setTimeout(function() {
+                    snapToNearest();
+                }, 200); // Slightly longer delay for better UX
+            }
             
-            // Update active dot on scroll
-            carousel.addEventListener('scroll', updateActiveDot);
-            
-            // Initial state
+            // Initialize on load
+            initializeDots();
             updateActiveDot();
+            
+            // Update active dot on scroll (optimized with RAF throttling)
+            carousel.addEventListener('scroll', handleScroll, { passive: true });
+            
+            // Recalculate on window resize (debounced)
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(function() {
+                    const oldConfig = { visible: visibleBooks, dots: totalDots };
+                    initializeDots();
+                    // If configuration changed, reset to first page
+                    if (oldConfig.visible !== visibleBooks || oldConfig.dots !== totalDots) {
+                        carousel.scrollLeft = 0;
+                    }
+                    updateActiveDot();
+                }, 250);
+            });
         });
     </script>
+    
+    <!-- Footer -->
+    <footer th:replace="~{layout/footer :: footer}"></footer>
 </body>
 </html>

@@ -10,52 +10,7 @@
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand" th:href="@{/}">Book Store</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" th:href="@{/books}">Browse Books</a>
-                    </li>
-                    <li class="nav-item" sec:authorize="isAuthenticated()">
-                        <a class="nav-link" th:href="@{/cart}">
-                            🛒 Cart
-                            <span class="badge bg-light text-dark" th:text="${cartItemCount}" th:if="${cartItemCount != null and cartItemCount > 0}">0</span>
-                        </a>
-                    </li>
-                    <li class="nav-item" sec:authorize="isAuthenticated()">
-                        <a class="nav-link" th:href="@{/orders}">My Orders</a>
-                    </li>
-                    <li class="nav-item" sec:authorize="!isAuthenticated()">
-                        <a class="nav-link" th:href="@{/login}">Login</a>
-                    </li>
-                    <li class="nav-item" sec:authorize="!isAuthenticated()">
-                        <a class="nav-link" th:href="@{/register}">Register</a>
-                    </li>
-                    <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            <span sec:authentication="principal.fullName">User Name</span>
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" th:href="@{/profile}">Profile</a></li>
-                            <li sec:authorize="hasRole('ADMIN')"><a class="dropdown-item" th:href="@{/admin/dashboard}">Admin Dashboard</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <form th:action="@{/logout}" method="post" style="display: inline;">
-                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                    <button type="submit" class="dropdown-item">Logout</button>
-                                </form>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <nav th:replace="~{layout/header :: header}"></nav>
     <!-- Verification Warning Banner -->
     <div sec:authorize="isAuthenticated()"
          class="alert alert-warning alert-dismissible fade show m-0 border-0 rounded-0 text-center" 
@@ -76,7 +31,7 @@
         <!-- Page Header -->
         <div class="row mb-4">
             <div class="col-12">
-                <h1 class="mb-2" th:text="${popular != null and popular} ? '🔥 Popular Books' : (${recent != null and recent} ? '🆕 Recently Added' : '📖 Browse Books')">Browse Books</h1>
+                <h1 class="mb-2" th:text="${popular != null and popular} ? 'Popular Books' : (${recent != null and recent} ? 'Recently Added' : 'Browse Books')">Browse Books</h1>
                 <p class="text-muted" th:text="${popular != null and popular} ? 'Our most popular books' : (${recent != null and recent} ? 'Our newest additions' : 'Discover our collection')">Discover our collection</p>
             </div>
         </div>
@@ -132,17 +87,21 @@
                 <div th:each="book : ${bookPage.content}" class="col-md-3 mb-4">
                     <div class="card h-100 shadow-sm">
                         <div class="position-relative">
-                            <img th:src="${book.imageUrl != null ? book.imageUrl : '/images/placeholder.jpg'}" 
+                            <a th:href="@{/books/{id}(id=${book.bookId})}">
+                                <img th:src="${book.imageUrl != null ? book.imageUrl : '/images/placeholder.jpg'}" 
                                  class="card-img-top" 
                                  style="height: 250px; object-fit: cover;"
                                  th:alt="${book.title}">
+                            </a>
                             <span th:if="${book.quantity != null and book.quantity == 0}" 
                                   class="badge bg-danger position-absolute top-0 end-0 m-2">
                                 Out of Stock
                             </span>
                         </div>
                         <div class="card-body d-flex flex-column">
-                            <h5 class="card-title" th:text="${book.title}">Book Title</h5>
+                            <a th:href="@{/books/{id}(id=${book.bookId})}" class="text-decoration-none text-black">
+                                <h5 class="card-title" th:text="${book.title}">Book Title</h5>
+                            </a>
                             <p class="text-muted mb-2" th:text="${book.author}">Author</p>
                             <p class="card-text flex-grow-1">
                                 <small class="text-muted" th:text="${book.description != null ? (#strings.abbreviate(book.description, 100)) : 'No description available'}">
@@ -151,9 +110,6 @@
                             </p>
                             <div class="mt-auto">
                                 <p class="h5 text-primary mb-2" th:text="${T(com.second_project.book_store.util.CurrencyUtils).formatVND(book.price)}">0 VND</p>
-                                <a th:href="@{/books/{id}(id=${book.bookId})}" class="btn btn-primary w-100">
-                                    View Details
-                                </a>
                             </div>
                         </div>
                     </div>
@@ -188,6 +144,9 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Footer -->
+    <footer th:replace="~{layout/footer :: footer}"></footer>
 </body>
 </html>
 

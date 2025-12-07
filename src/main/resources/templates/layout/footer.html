@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <!-- Footer -->
+    <footer th:fragment="footer" class="bg-light border-top mt-5">
+        <div class="container py-4">
+            <div class="row">
+                <!-- Company Info -->
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5 class="mb-3 text-dark">Book Store</h5>
+                    <p class="text-muted mb-0">
+                        Your trusted online bookstore for all your reading needs. 
+                        Discover a wide selection of books across various genres.
+                    </p>
+                </div>
+                
+                <!-- Quick Links -->
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5 class="mb-3 text-dark">Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <a th:href="@{/books}" class="text-dark text-decoration-none">
+                                <i class="bi bi-book me-2"></i>Browse Books
+                            </a>
+                        </li>
+                        <li class="mb-2" sec:authorize="isAuthenticated()">
+                            <a th:href="@{/cart}" class="text-dark text-decoration-none">
+                                <i class="bi bi-cart me-2"></i>Shopping Cart
+                            </a>
+                        </li>
+                        <li class="mb-2" sec:authorize="isAuthenticated()">
+                            <a th:href="@{/orders}" class="text-dark text-decoration-none">
+                                <i class="bi bi-receipt me-2"></i>My Orders
+                            </a>
+                        </li>
+                        <li class="mb-2" sec:authorize="!isAuthenticated()">
+                            <a th:href="@{/login}" class="text-dark text-decoration-none">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Login
+                            </a>
+                        </li>
+                        <li sec:authorize="!isAuthenticated()">
+                            <a th:href="@{/register}" class="text-dark text-decoration-none">
+                                <i class="bi bi-person-plus me-2"></i>Register
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Contact Info -->
+                <div class="col-md-4">
+                    <h5 class="mb-3 text-dark">Contact Us</h5>
+                    <p class="text-dark mb-2">
+                        <i class="bi bi-envelope me-2"></i>
+                        <span th:text="${adminEmail}">admin@example.com</span>
+                    </p>
+                    <p class="text-muted mb-0 small">
+                        For inquiries, support, or feedback, please reach out to us via email.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Copyright -->
+            <hr class="my-4">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <p class="text-muted mb-0 small">
+                        &copy; <span th:text="${#dates.year(#dates.createNow())}">2024</span> Book Store. All rights reserved.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
+

@@ -1,6 +1,8 @@
 package com.second_project.book_store.controller.page;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -138,6 +140,13 @@ public class BookCatalogController {
         try {
             BookDto book = bookService.getBookById(id);
             model.addAttribute("book", book);
+
+            // Get genre names for display
+            List<String> genreNames = genreService.getAllGenres().stream()
+                .filter(g -> book.getGenreIds() != null && book.getGenreIds().contains(g.getId()))
+                .map(g -> g.getName())
+                .collect(Collectors.toList());
+            model.addAttribute("genreNames", genreNames);
 
             Long currentUserId = null;
             boolean hasReviewed = false;

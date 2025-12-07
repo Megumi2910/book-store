@@ -10,43 +10,8 @@
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand" th:href="@{/}">Book Store</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" th:href="@{/books}">Browse Books</a>
-                    </li>
-                    <li class="nav-item" sec:authorize="isAuthenticated()">
-                        <a class="nav-link" th:href="@{/cart}">🛒 Cart</a>
-                    </li>
-                    <li class="nav-item" sec:authorize="isAuthenticated()">
-                        <a class="nav-link" th:href="@{/orders}">My Orders</a>
-                    </li>
-                    <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            <span sec:authentication="principal.fullName">User Name</span>
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" th:href="@{/profile}">Profile</a></li>
-                            <li sec:authorize="hasRole('ADMIN')"><a class="dropdown-item" th:href="@{/admin/dashboard}">Admin Dashboard</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <form th:action="@{/logout}" method="post" style="display: inline;">
-                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                    <button type="submit" class="dropdown-item">Logout</button>
-                                </form>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <nav th:replace="~{layout/header :: header}"></nav>
+    
     <!-- Verification Warning Banner -->
     <div sec:authorize="isAuthenticated()"
          class="alert alert-warning alert-dismissible fade show m-0 border-0 rounded-0 text-center" 
@@ -113,6 +78,14 @@
                           class="badge bg-danger fs-6">
                         <i class="bi bi-x-circle me-1"></i>
                         Out of Stock
+                    </span>
+                </div>
+
+                <!-- Genres -->
+                <div class="mb-3" th:if="${genreNames != null and !genreNames.isEmpty()}">
+                    <strong>Genres:</strong>
+                    <span th:each="genreName, iterStat : ${genreNames}">
+                        <span class="badge bg-secondary me-1" th:text="${genreName}">Genre</span>
                     </span>
                 </div>
 
@@ -285,7 +258,8 @@
                             <div class="col-md-9">
                                 <h6 class="mb-3">Rating Distribution</h6>
                                 <!-- Rating bars -->
-                                <div th:each="i : ${#numbers.sequence(5, 1, -1)}" class="mb-2">
+                                <div th:each="i : ${#numbers.sequence(5, 1, -1)}" class="mb-2" 
+                                     th:with="ratingCount=${ratingDistribution != null ? ratingDistribution.get(i) : 0L}">
                                     <div class="row align-items-center">
                                         <div class="col-auto" style="width: 60px;">
                                             <span th:text="${i}">5</span> 
@@ -294,12 +268,12 @@
                                         <div class="col">
                                             <div class="progress" style="height: 20px;">
                                                 <div class="progress-bar bg-warning" 
-                                                     th:style="${'width: ' + ((reviewCount != null and reviewCount > 0 and ratingDistribution != null and ratingDistribution[i] != null) ? (ratingDistribution[i] * 100.0 / reviewCount) : 0) + '%'}">
+                                                     th:style="${'width: ' + ((reviewCount != null and reviewCount > 0) ? (ratingCount * 100.0 / reviewCount) : 0) + '%'}">
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-auto" style="width: 50px;">
-                                            <span th:text="${ratingDistribution != null and ratingDistribution[i] != null ? ratingDistribution[i] : 0}">0</span>
+                                            <span th:text="${ratingCount}">0</span>
                                         </div>
                                     </div>
                                 </div>
@@ -850,5 +824,8 @@
             border-top: none;
         }
     </style>
+    
+    <!-- Footer -->
+    <footer th:replace="~{layout/footer :: footer}"></footer>
 </body>
 </html>

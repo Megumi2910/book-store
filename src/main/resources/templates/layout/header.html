@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+    <!-- Navigation -->
+    <nav th:fragment="header" class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" th:href="@{/}">Book Store</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/books}">Browse Books</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <a class="nav-link" th:href="@{/cart}">
+                            🛒 Cart
+                            <span class="badge bg-light text-dark" th:text="${cartItemCount}" th:if="${cartItemCount != null and cartItemCount > 0}">0</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <a class="nav-link" th:href="@{/orders}">My Orders</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="!isAuthenticated()">
+                        <a class="nav-link" th:href="@{/login}">Login</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="!isAuthenticated()">
+                        <a class="nav-link" th:href="@{/register}">Register</a>
+                    </li>
+                    <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <span sec:authentication="principal.fullName">User Name</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" th:href="@{/profile}">Profile</a></li>
+                            <li sec:authorize="hasRole('ADMIN')"><a class="dropdown-item" th:href="@{/admin/dashboard}">Admin Dashboard</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form th:action="@{/logout}" method="post" style="display: inline;">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    <button type="submit" class="dropdown-item">Logout</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Verification Warning Banner (for unverified users) -->
+    <div th:fragment="verification-banner" 
+         class="alert alert-warning alert-dismissible fade show m-0 border-0 rounded-0 text-center" 
+         role="alert" 
+         sec:authorize="isAuthenticated()"
+         th:if="${isAuthenticated != null and isAuthenticated and isVerified != null and !isVerified}">
+        <div class="container">
+            <strong><i class="bi bi-exclamation-triangle me-2"></i>Account Not Verified</strong>
+            <span class="mx-2">|</span>
+            <span>Please verify your email to access shopping features (cart, orders, checkout).</span>
+            <span class="mx-2">|</span>
+            <a th:href="@{/send-verify-email}" class="alert-link fw-bold text-decoration-underline">
+                Send Verification Email
+            </a>
+        </div>
+    </div>
+</body>
+</html>
+
