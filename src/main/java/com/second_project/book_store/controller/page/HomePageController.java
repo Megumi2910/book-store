@@ -13,7 +13,6 @@ import java.util.List;
 import com.second_project.book_store.model.BookDto;
 import com.second_project.book_store.security.CustomUserDetails;
 import com.second_project.book_store.service.BookService;
-import com.second_project.book_store.service.CartService;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -22,16 +21,16 @@ import jakarta.servlet.http.HttpSession;
  * 
  * This is the default page users see after successful login.
  * URL: http://127.0.0.1:8080/
+ * 
+ * Note: cartItemCount is automatically added by GlobalModelAttributes
  */
 @Controller
 public class HomePageController {
 
     private final BookService bookService;
-    private final CartService cartService;
 
-    public HomePageController(BookService bookService, CartService cartService) {
+    public HomePageController(BookService bookService) {
         this.bookService = bookService;
-        this.cartService = cartService;
     }
 
     /**
@@ -80,12 +79,7 @@ public class HomePageController {
         List<BookDto> popularBooks = bookService.getPopularBooks(9);
         model.addAttribute("popularBooks", popularBooks);
 
-        // Add cart item count for authenticated users
-        if (authentication != null && authentication.isAuthenticated()) {
-            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-            Integer cartItemCount = cartService.getCartItemCount(userDetails.getUserId());
-            model.addAttribute("cartItemCount", cartItemCount);
-        }
+        // Note: cartItemCount is automatically added by GlobalModelAttributes
         
         return "index";  // Thymeleaf template: src/main/resources/templates/index.html
     }

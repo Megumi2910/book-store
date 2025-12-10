@@ -1,0 +1,384 @@
+/* Modern Glass Morphism Navbar Styles */
+
+/* Main Navbar Styling */
+.modern-navbar {
+    background: rgba(13, 110, 253, 0.90) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    padding: 0.75rem 0;
+    z-index: 1030;
+}
+
+.modern-navbar.scrolled {
+    background: rgba(13, 110, 253, 0.95) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    padding: 0.5rem 0;
+}
+
+/* Navbar Spacer for Fixed Positioning */
+.navbar-spacer {
+    height: 76px;
+}
+
+/* Body Layout - Ensure footer stays at bottom using Flexbox Sticky Footer */
+html, body {
+    height: 100%;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding-top: 76px; /* Height of fixed navbar - prevents content from being hidden */
+}
+
+/* Main content wrapper should grow to push footer down */
+.main-content,
+body > .container:not(footer .container),
+body > .container-fluid:not(footer .container-fluid),
+body > main {
+    flex: 1 0 auto;
+    padding-bottom: 2rem; /* Breathing room before footer */
+}
+
+/* For pages without main-content wrapper, direct container gets flex */
+body > .container:first-of-type {
+    flex: 1 0 auto;
+}
+
+/* Footer should stick to bottom */
+footer {
+    flex-shrink: 0;
+    margin-top: 0 !important; /* Override any mt-5 classes */
+}
+
+/* Adjust footer margin to not have excessive top spacing */
+footer.mt-5 {
+    margin-top: 0 !important;
+}
+
+/* Override padding for special pages (like error pages that don't need navbar spacing) */
+.no-navbar-padding {
+    padding-top: 0 !important;
+}
+
+/* Brand Styling */
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+    transition: transform 0.3s ease;
+}
+
+.navbar-brand:hover {
+    transform: scale(1.05);
+}
+
+.brand-icon {
+    font-size: 1.8rem;
+    transition: transform 0.3s ease;
+}
+
+.navbar-brand:hover .brand-icon {
+    transform: rotate(-10deg);
+}
+
+.brand-text {
+    letter-spacing: 0.5px;
+}
+
+/* Search Form Styling */
+.search-form {
+    width: 45%;
+    max-width: 500px;
+}
+
+.search-input-group {
+    border-radius: 50px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.search-input-group:focus-within {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+}
+
+.search-icon-wrapper {
+    padding-left: 1rem;
+    border: none;
+}
+
+.search-input {
+    border: none;
+    padding: 0.6rem 1rem;
+    font-size: 0.95rem;
+}
+
+.search-input:focus {
+    box-shadow: none;
+    outline: none;
+}
+
+/* Navigation Links */
+.navbar-nav .nav-link-modern {
+    transition: all 0.2s ease;
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    margin: 0.25rem 0.2rem;
+    font-weight: 500;
+    position: relative;
+}
+
+.navbar-nav .nav-link-modern:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+.navbar-nav .nav-link-modern i {
+    font-size: 1.1rem;
+}
+
+/* Cart Link - Ensure Relative Positioning */
+.cart-link {
+    position: relative !important;
+    display: inline-flex !important;
+}
+
+/* Cart Icon Styling */
+.cart-icon {
+    font-size: 1.4rem;
+    transition: transform 0.3s ease;
+    position: relative;
+}
+
+.nav-link:hover .cart-icon {
+    transform: scale(1.1);
+}
+
+/* Cart Badge - Positioned at Top-Right of Cart Icon */
+.cart-badge {
+    position: absolute !important;
+    top: 0px !important;
+    left: 16px !important;
+    animation: pulse 2s infinite;
+    font-size: 0.6rem !important;
+    padding: 0.25em 0.4em !important;
+    min-width: 16px !important;
+    height: 16px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+    line-height: 1 !important;
+    font-weight: 700 !important;
+    z-index: 10 !important;
+    border: 2px solid #0d6efd !important;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.15);
+    }
+}
+
+/* Cart Badge - Mobile & Tablet Adjustments */
+@media (max-width: 991.98px) {
+    .cart-badge {
+        top: -2px !important;
+        left: 14px !important;
+        font-size: 0.55rem !important;
+        min-width: 15px !important;
+        height: 15px !important;
+    }
+}
+
+/* Desktop Specific - Fine Tuning */
+@media (min-width: 992px) {
+    .cart-badge {
+        top: 2px !important;
+        left: 18px !important;
+    }
+}
+
+/* Register Button */
+.register-btn {
+    border-radius: 50px;
+    padding: 0.5rem 1.25rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.register-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    background: #ffffff !important;
+}
+
+/* User Dropdown */
+.user-dropdown-toggle {
+    padding: 0.4rem 1rem;
+    border-radius: 50px;
+    transition: all 0.2s ease;
+}
+
+.user-dropdown-toggle:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.user-avatar {
+    width: 38px;
+    height: 38px;
+    transition: all 0.3s ease;
+}
+
+.user-dropdown-toggle:hover .user-avatar {
+    transform: scale(1.1);
+}
+
+.user-avatar i {
+    font-size: 1.2rem;
+}
+
+.user-name {
+    font-weight: 500;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Modern Dropdown Menu */
+.modern-dropdown {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    padding: 0.5rem 0;
+    margin-top: 0.5rem;
+    min-width: 220px;
+}
+
+.modern-dropdown .dropdown-item {
+    padding: 0.75rem 1.5rem;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.modern-dropdown .dropdown-item i {
+    font-size: 1.1rem;
+    width: 20px;
+}
+
+.modern-dropdown .dropdown-item:hover {
+    background: linear-gradient(90deg, rgba(13, 110, 253, 0.1), rgba(13, 110, 253, 0.05));
+    transform: translateX(5px);
+}
+
+.modern-dropdown .dropdown-item.text-danger:hover {
+    background: linear-gradient(90deg, rgba(220, 53, 69, 0.1), rgba(220, 53, 69, 0.05));
+}
+
+/* Navbar Toggler */
+.navbar-toggler {
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.navbar-toggler:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.navbar-toggler:focus {
+    box-shadow: none;
+    outline: none;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 991.98px) {
+    .modern-navbar {
+        background: rgba(13, 110, 253, 0.97) !important;
+    }
+    
+    .navbar-collapse {
+        background: rgba(13, 110, 253, 0.98);
+        border-radius: 12px;
+        margin-top: 1rem;
+        padding: 1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .navbar-nav .nav-link-modern {
+        margin: 0.25rem 0;
+    }
+    
+    .user-dropdown-toggle {
+        border-radius: 8px;
+    }
+    
+    .register-btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* Smooth Scroll Behavior for Fixed Navbar */
+html {
+    scroll-padding-top: 80px;
+}
+
+/* Additional Hover Effects */
+.nav-item {
+    position: relative;
+}
+
+.nav-link-modern::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.8);
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.nav-link-modern:hover::after {
+    width: 80%;
+}
+
+/* Active State */
+.nav-link-modern.active {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Accessibility Improvements */
+.navbar-nav .nav-link:focus,
+.navbar-brand:focus,
+.dropdown-item:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
+}
+
+/* Loading Animation for Search */
+.search-input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 14px;
+    width: 14px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/%3E%3C/svg%3E");
+    cursor: pointer;
+}
+
+/* Ensure dropdowns appear above other content */
+.dropdown-menu {
+    z-index: 1050;
+}
+

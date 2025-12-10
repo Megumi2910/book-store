@@ -115,13 +115,13 @@ public class BookCatalogController {
         model.addAttribute("totalPages", bookPage.getTotalPages());
         model.addAttribute("totalItems", bookPage.getTotalElements());
 
-        // Add cart item count for authenticated users
+        // Add user verification status for authenticated users
         if (authentication != null && authentication.isAuthenticated()) {
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-            Integer cartItemCount = cartService.getCartItemCount(userDetails.getUserId());
-            model.addAttribute("cartItemCount", cartItemCount);
             model.addAttribute("isVerified", userDetails.isVerified());
         }
+
+        // Note: cartItemCount is automatically added by GlobalModelAttributes
 
         return "books/catalog";
     }
@@ -166,8 +166,7 @@ public class BookCatalogController {
                 purchased = orderService.verifyIfExistOrderItemForDeliveredOrder(id, currentUserId);
 
                 if (isVerified) {
-                    Integer cartItemCount = cartService.getCartItemCount(currentUserId);
-                    model.addAttribute("cartItemCount", cartItemCount);
+                    // Note: cartItemCount is automatically added by GlobalModelAttributes
                     
                     // Check if user already reviewed this book
                     userReview = reviewService.getUserReviewForBook(currentUserId, id);

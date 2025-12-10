@@ -72,8 +72,11 @@ public class ChangePasswordPageController {
             logger.warn("Validation error changing password : {}", e.getMessage());
     
             // Add error to BindingResult so it appears as field error
-            if (e.getMessage().contains("Current password")) {
+            if (e.getMessage().contains("Current password is incorrect")) {
                 bindingResult.rejectValue("currentPassword", "error.currentPassword", e.getMessage());
+            }
+            else if (e.getMessage().contains("New password must be different from current password")){
+                bindingResult.rejectValue("password", "error.password", e.getMessage());
             }
             
             return "change-password";

@@ -3,6 +3,8 @@ server:
   servlet:
     session:
       timeout: 2h
+  tomcat:
+    max-part-count: 500
 
 spring:
   profiles:
@@ -44,7 +46,7 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
-      ddl-auto: validate  # Changed from 'update' to 'validate' - Flyway handles schema changes
+      ddl-auto: update  # Changed from 'update' to 'validate' - Flyway handles schema changes
     properties:
       hibernate:
         format_sql: true

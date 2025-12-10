@@ -7,6 +7,7 @@
     <title th:text="${pageTitle != null ? pageTitle + ' - Book Store' : 'Book Store'}">Book Store</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
     
     <!-- Page-specific CSS -->
     <th:block th:fragment="extra-css"></th:block>
@@ -19,9 +20,11 @@
     <div th:replace="~{layout/header :: verification-banner}"></div>
     
     <!-- Main Content -->
-    <th:block th:fragment="content">
-        <!-- Page-specific content will be inserted here -->
-    </th:block>
+    <main class="main-content">
+        <th:block th:fragment="content">
+            <!-- Page-specific content will be inserted here -->
+        </th:block>
+    </main>
     
     <!-- Footer -->
     <footer th:replace="~{layout/footer :: footer}"></footer>
@@ -31,6 +34,9 @@
     
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Modern Navbar JS -->
+    <script th:src="@{/js/navbar.js}"></script>
     
     <!-- Page-specific JavaScript -->
     <th:block th:fragment="extra-js"></th:block>
